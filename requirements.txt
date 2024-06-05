@@ -2,3 +2,4 @@ questionary
 rich
 setuptools
 todoist-api-python
+toml

@@ -17,6 +17,21 @@ class WorkType(Enum):
     PERSONAL = auto()
 
 
+def create_subtask(
+    api,
+    content,
+    project_id,
+    task_type,
+    work_type,
+    parent_id,
+    extra_labels=[],
+    comment="",
+):
+    return create_task(
+        api, content, project_id, task_type, work_type, parent_id, extra_labels, comment
+    )
+
+
 def create_task(
     api,
     content,

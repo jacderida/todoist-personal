@@ -2,13 +2,31 @@ import argparse
 import os
 import sys
 
+from .cmd import \
+    sept11_nist_assoc_dir_with_tape, \
+    dev_releases_aw_release_checklist
+
 from todoist_api_python.api import TodoistAPI
 
-from .cmd import sept11_nist_assoc_dir_with_tape
 
 def get_args():
     parser = argparse.ArgumentParser(description="Create tasks in Todoist")
     main_subparser = parser.add_subparsers(dest="command", required=True)
+
+    dev_parser = main_subparser.add_parser("dev", help="Manage dev tasks")
+    dev_subparsers = dev_parser.add_subparsers(
+        dest="dev_command",
+        help="Manage dev tasks",
+        required=True)
+    release_parser = dev_subparsers.add_parser(
+        "releases", help="Manage tasks related to release checklists")
+    releases_subparsers = release_parser.add_subparsers(
+        dest="releases_command",
+        help="Release-related tasks",
+        required=True)
+    releases_subparsers.add_parser(
+        "aw-release-checklist",
+        help="Create a task for an Archive Witness release checklist")
 
     sept11_parser = main_subparser.add_parser(
         "sept11",
@@ -17,13 +35,12 @@ def get_args():
         dest="sept11_command",
         help="Manage tasks for the 9/11 Archiving project",
         required=True)
-
     nist_parser = sept11_subparsers.add_parser(
         "nist",
         help="Manage tasks for NIST")
     nist_subparsers = nist_parser.add_subparsers(
         dest="nist_command",
-        help="NIST related tasks",
+        help="NIST-related tasks",
         required=True)
     assoc_parser = nist_subparsers.add_parser(
         "assoc-dir-with-tape",
@@ -56,6 +73,10 @@ def main():
                 sept11_nist_assoc_dir_with_tape(api, args.subtasks_path)
             elif args.nist_command == "locate-tape":
                 print("Processing locate-tape command")
+    elif args.command == "dev":
+        if args.dev_command == "releases":
+            if args.releases_command == "aw-release-checklist":
+                dev_releases_aw_release_checklist(api)
     elif args.command == "food":
         if args.food_command == "add-item":
             print("Processing add-item command")
