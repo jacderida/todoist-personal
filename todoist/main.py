@@ -4,6 +4,7 @@ import sys
 
 from .cmd import \
     sept11_nist_assoc_dir_with_tape, \
+    sept11_nist_locate_tape, \
     dev_releases_aw_release_checklist
 
 from todoist_api_python.api import TodoistAPI
@@ -54,7 +55,7 @@ Each directory in the list will be created as a task.""")
     locate_parser = nist_subparsers.add_parser(
         "locate-tape",
         help="Create a task for locating a tape from NIST's database in the release files")
-    locate_parser.add_argument("--subtasks-path")
+    locate_parser.add_argument("--tape-list-path")
 
     food_parser = main_subparser.add_parser("food", help="Manage tasks for food")
     food_subparsers = food_parser.add_subparsers(
@@ -77,7 +78,7 @@ def main():
             if args.nist_command == "assoc-dir-with-tape":
                 sept11_nist_assoc_dir_with_tape(api, args.dir_list_path)
             elif args.nist_command == "locate-tape":
-                print("Processing locate-tape command")
+                sept11_nist_locate_tape(api, args.tape_list_path)
     elif args.command == "dev":
         if args.dev_command == "releases":
             if args.releases_command == "aw-release-checklist":
