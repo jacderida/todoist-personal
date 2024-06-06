@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.1] - 2024-06-06
+
+### 🚀 Features
+
+- Provide `sept11 nist locate-tape` cmd
+
 ## [0.2.0] - 2024-06-06
 
 ### 🚀 Features
