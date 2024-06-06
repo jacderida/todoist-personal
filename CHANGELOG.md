@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2024-06-06
+
+### 🚀 Features
+
+- [**breaking**] Rename `--subtasks-path` to `--dir-list-path`
+
 ## [0.1.1] - 2024-06-05
 
 ### 🚀 Features
