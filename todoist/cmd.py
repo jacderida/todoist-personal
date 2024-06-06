@@ -15,12 +15,12 @@ ARCHIVE_WIT_PATH = "/home/chris/dev/github.com/jacderida/archive-witness-db-tool
 #
 # sept11 commands
 #
-def sept11_nist_assoc_dir_with_tape(api, tasks_path):
+def sept11_nist_assoc_dir_with_tape(api, dir_list_path):
     work_type = WorkType.PERSONAL
     task_type = TaskType.RESEARCH
 
-    if tasks_path:
-        with open(tasks_path, "r") as f:
+    if dir_list_path:
+        with open(dir_list_path, "r") as f:
             for line in f.readlines():
                 name = line.strip()
                 create_task(

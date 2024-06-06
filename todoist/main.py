@@ -45,7 +45,12 @@ def get_args():
     assoc_parser = nist_subparsers.add_parser(
         "assoc-dir-with-tape",
         help="Create a task for associating a directory with a tape from NIST's database")
-    assoc_parser.add_argument("--subtasks-path")
+    assoc_parser.add_argument(
+        "--dir-list-path",
+        help="""
+A path to a file containing a list of directories to associate with tapes.
+
+Each directory in the list will be created as a task.""")
     locate_parser = nist_subparsers.add_parser(
         "locate-tape",
         help="Create a task for locating a tape from NIST's database in the release files")
@@ -70,7 +75,7 @@ def main():
     if args.command == "sept11":
         if args.sept11_command == "nist":
             if args.nist_command == "assoc-dir-with-tape":
-                sept11_nist_assoc_dir_with_tape(api, args.subtasks_path)
+                sept11_nist_assoc_dir_with_tape(api, args.dir_list_path)
             elif args.nist_command == "locate-tape":
                 print("Processing locate-tape command")
     elif args.command == "dev":
