@@ -2,10 +2,8 @@ import argparse
 import os
 import sys
 
-from .cmd import \
-    sept11_nist_assoc_dir_with_tape, \
-    sept11_nist_locate_tape, \
-    dev_releases_aw_release_checklist
+from .cmd.dev import dev_releases_aw_release_checklist
+from .cmd.sept11 import sept11_nist_assoc_dir_with_tape, sept11_nist_locate_tape
 
 from todoist_api_python.api import TodoistAPI
 
