@@ -3,6 +3,7 @@ import os
 import sys
 
 from .cmd.dev import dev_releases_aw_release_checklist
+from .cmd.food import new_item
 from .cmd.sept11 import sept11_nist_assoc_dir_with_tape, sept11_nist_locate_tape
 
 from todoist_api_python.api import TodoistAPI
@@ -60,7 +61,7 @@ Each directory in the list will be created as a task.""")
         dest="food_command",
         help="Manage tasks for food",
         required=True)
-    food_subparsers.add_parser("add-item")
+    food_subparsers.add_parser("new-item")
 
     return parser.parse_args()
 
@@ -82,8 +83,8 @@ def main():
             if args.releases_command == "aw-release-checklist":
                 dev_releases_aw_release_checklist(api)
     elif args.command == "food":
-        if args.food_command == "add-item":
-            print("Processing add-item command")
+        if args.food_command == "new-item":
+            new_item()
 
 
 if __name__ == "__main__":
