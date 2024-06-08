@@ -3,7 +3,7 @@ import os
 import sys
 
 from .cmd.dev import dev_releases_aw_release_checklist
-from .cmd.food import new_item
+from .cmd.food import new_item, new_meal
 from .cmd.sept11 import sept11_nist_assoc_dir_with_tape, sept11_nist_locate_tape
 
 from todoist_api_python.api import TodoistAPI
@@ -61,7 +61,8 @@ Each directory in the list will be created as a task.""")
         dest="food_command",
         help="Manage tasks for food",
         required=True)
-    food_subparsers.add_parser("new-item")
+    food_subparsers.add_parser("new-item", help="Create a new food item in the database")
+    food_subparsers.add_parser("new-meal", help="Create a new meal in the database")
 
     return parser.parse_args()
 
@@ -85,6 +86,8 @@ def main():
     elif args.command == "food":
         if args.food_command == "new-item":
             new_item()
+        elif args.food_command == "new-meal":
+            new_meal()
 
 
 if __name__ == "__main__":

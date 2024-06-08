@@ -12,6 +12,78 @@ class MealType(Enum):
     Snacks = 4
 
 
+class Meal:
+    def __init__(self, id, name, meal_type_id):
+        self.id = id
+        self.name = name
+        self.meal_type = MealType(meal_type_id)
+        self.items = []
+        self.items_with_quantities = {}
+
+    def add_item(self, item, quantity):
+        self.items.append(item)
+        self.items_with_quantities[item.id] = quantity
+
+    def save(self, conn):
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                """
+                INSERT INTO meals (name, meal_type_id) 
+                VALUES (?, ?)
+                """,
+                (self.name, self.meal_type.value)
+            )
+            self.id = cursor.lastrowid
+
+            for item in self.items:
+                cursor.execute(
+                    """
+                    INSERT INTO meals_food_items (meal_id, food_item_id, quantity) 
+                    VALUES (?, ?, ?)
+                    """,
+                    (self.id, item.id, self.items_with_quantities[self.id])
+                )
+
+            conn.commit()
+            conn.close()
+        except sqlite3.Error as e:
+            conn.rollback()
+            print("Error saving meal: ", e)
+            raise e
+
+    def __str__(self):
+        return (
+            f"ID: {self.id}\n"
+            f"Name: {self.name}\n"
+            f"Meal Type: {self.meal_type.name}\n"
+        )
+
+    @classmethod
+    def create(cls, food_items):
+        meal_name = questionary.text("Name: ").ask()
+        meal_type_choices = [meal_type.name for meal_type in MealType]
+        meal_type = questionary.select("Meal type: ", choices=meal_type_choices).ask()
+
+        food_item_choices = [food_item.name for food_item in food_items]
+        selected_food_names = questionary.checkbox("Food items: ", choices=food_item_choices).ask()
+        selected_food_items = []
+        for name in selected_food_names:
+            found_item = next((item for item in food_items if item.name == name), None)
+            if found_item:
+                selected_food_items.append(found_item)
+
+        items_with_quantities = {}
+        for item in selected_food_items:
+            quantity = int(questionary.text(f"{item.name} quantity: ", default="1").ask())
+            items_with_quantities[item.id] = quantity
+
+        meal = cls(0, meal_name, MealType[meal_type])
+        for food_item in selected_food_items:
+            meal.add_item(food_item, items_with_quantities[food_item.id])
+        return meal
+
+
 class FoodItem:
     def __init__(self, id, name, serving, calories, protein, fat, carbohydrates, fiber, sugar, salt, snack):
         self.id = id
@@ -58,6 +130,7 @@ class FoodItem:
         )
         conn.commit()
         self.id = cursor.lastrowid
+        conn.close()
 
     @classmethod
     def from_db_row(cls, row):
@@ -102,6 +175,16 @@ def new_item():
     print(new_item)
 
 
+def new_meal():
+    food_items = get_food_items()
+    conn = get_db_connection()
+    meal = Meal.create(food_items)
+    meal.save(conn)
+    print("==================")
+    print("= Saved new meal =")
+    print("==================")
+    print(meal)
+
 #
 # Helpers
 #
@@ -142,7 +225,44 @@ def get_db_connection():
             fiber REAL NOT NULL,
             sugar REAL NOT NULL,
             salt REAL NOT NULL,
-            snack INTEGER NOT NULL DEFAULT 0);
+            snack INTEGER NOT NULL DEFAULT 0
+        );
+        """
+    )
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS meals (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            meal_type_id INTEGER NOT NULL,
+            FOREIGN KEY (meal_type_id) REFERENCES meal_types (id)
+        );
+        """
+    )
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS meals_food_items (
+            meal_id INTEGER NOT NULL,
+            food_item_id INTEGER NOT NULL,
+            quantity INTEGER NOT NULL,
+            FOREIGN KEY (meal_id) REFERENCES meals (id),
+            FOREIGN KEY (food_item_id) REFERENCES food_items (id),
+            PRIMARY KEY (meal_id, food_item_id, quantity)
+        );
         """
     )
     return conn
+
+
+def get_food_items():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM food_items")
+
+    food_items = []
+    for row in cursor.fetchall():
+        food_items.append(FoodItem.from_db_row(row))
+
+    cursor.close()
+    conn.close()
+    return food_items
