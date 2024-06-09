@@ -2,14 +2,56 @@ import os
 import questionary
 import sqlite3
 
+from datetime import datetime
 from enum import Enum
+
+from rich.console import Console
+
+from todoist.tasks import get_full_label_names
+
+
+LUNCH_PROJECT_ID = 2321701711
+DINNER_PROJECT_ID = 2321953095
+NIGHT_PROJECT_ID = 2334412048
+SNACKS_PROJECT_ID = 2321953196
 
 
 class MealType(Enum):
     Lunch = 1
     Dinner = 2
     Night = 3
-    Snacks = 4
+    Snack = 4
+
+    def get_project_id(self):
+        project_ids = {
+            MealType.Lunch: LUNCH_PROJECT_ID,
+            MealType.Dinner: DINNER_PROJECT_ID,
+            MealType.Night: NIGHT_PROJECT_ID,
+            MealType.Snack: SNACKS_PROJECT_ID
+        }
+        return project_ids[self]
+
+
+class NutritionInfo:
+    def __init__(self, calories, protein, fat, carbohydrates, fiber, sugar, salt):
+        self.calories = calories
+        self.protein = protein
+        self.fat = fat
+        self.carbohydrates = carbohydrates
+        self.fiber = fiber
+        self.sugar = sugar
+        self.salt = salt
+
+    def __str__(self):
+        return (
+            f"Calories: {self.calories}\n"
+            f"Protein: {self.protein}\n"
+            f"Fat: {self.fat}\n"
+            f"Carbohydrates: {self.carbohydrates}\n"
+            f"Fiber: {self.fiber}\n"
+            f"Sugar: {self.sugar}\n"
+            f"Salt: {self.salt}\n"
+        )
 
 
 class Meal:
@@ -23,6 +65,17 @@ class Meal:
     def add_item(self, item, quantity):
         self.items.append(item)
         self.items_with_quantities[item.id] = quantity
+
+    def get_nutrition_info(self):
+        return NutritionInfo(
+            sum((item.calories * self.items_with_quantities[item.id] for item in self.items)),
+            sum((item.protein * self.items_with_quantities[item.id] for item in self.items)),
+            sum((item.fat * self.items_with_quantities[item.id] for item in self.items)),
+            sum((item.carbohydrates * self.items_with_quantities[item.id] for item in self.items)),
+            sum((item.fiber * self.items_with_quantities[item.id] for item in self.items)),
+            sum((item.sugar * self.items_with_quantities[item.id] for item in self.items)),
+            sum((item.salt * self.items_with_quantities[item.id] for item in self.items)),
+        )
 
     def save(self, conn):
         cursor = conn.cursor()
@@ -58,6 +111,10 @@ class Meal:
             f"Name: {self.name}\n"
             f"Meal Type: {self.meal_type.name}\n"
         )
+
+    @classmethod
+    def from_db_row(cls, row):
+        return cls(*row)
 
     @classmethod
     def create(cls, food_items):
@@ -111,6 +168,17 @@ class FoodItem:
             f"Sugar: {round(self.sugar, 1)}\n"
             f"Salt: {round(self.salt, 1)}\n"
             f"Snack: {'Yes' if self.snack else 'No'}"
+        )
+
+    def get_nutrition_info(self):
+        return NutritionInfo(
+            self.calories,
+            self.protein,
+            self.fat,
+            self.carbohydrates,
+            self.fiber,
+            self.sugar,
+            self.salt,
         )
 
     def save(self, conn):
@@ -185,6 +253,71 @@ def new_meal():
     print("==================")
     print(meal)
 
+
+def plan(api):
+    food_items = get_food_items()
+    meals = get_meals(food_items)
+
+    print("Provide the date for the meal plan")
+    date = date_picker()
+
+    total_calories = 0
+    while True:
+        choice = questionary.select(
+            "Add a meal or a snack to the plan?", choices=["meal", "snack"]).ask()
+        if choice == "meal":
+            selection = questionary.select(
+                "Meal: ",
+                choices=sorted([f"{meal.meal_type.name}: {meal.name}" for meal in meals])).ask()
+            name = selection.split(":")[1].strip()
+            meal = next((meal for meal in meals if meal.name == name))
+
+            console = Console()
+            with console.status("[bold green]Creating task on Todoist...") as _:
+                nutrition_info = meal.get_nutrition_info()
+                total_calories += nutrition_info.calories
+                task = api.add_task(
+                    content=f"{meal.name} [{nutrition_info.calories}]",
+                    labels=get_full_label_names(api, ["food"]),
+                    project_id=meal.meal_type.get_project_id(),
+                    due_date=date.strftime("%Y-%m-%d")
+                )
+                api.add_comment(task_id=task.id, content=str(nutrition_info))
+                print(f"Added {meal.name} to plan")
+        elif choice == "snack":
+            selection = questionary.select(
+                "Snack: ",
+                choices=[item.name for item in food_items if item.snack]).ask()
+            snack = next((item for item in food_items if item.name == selection))
+
+            # Snacks have their own meal type, and in that case, they are not eaten as part of
+            # another meal. However, they can also be part of another meal. For example, at lunch,
+            # you could have a chocolate bar and/or packet of crisps with your sandwiches.
+            meal_type = MealType.Snack
+            if questionary.confirm("Is the snack part of a meal?").ask():
+                meal_type_choices = [
+                    meal_type.name for meal_type in MealType if not meal_type == MealType.Snack
+                ]
+                meal_type = questionary.select("Meal for snack: ", choices=meal_type_choices).ask()
+                meal_type = MealType[meal_type]
+
+            console = Console()
+            with console.status("[bold green]Creating task on Todoist...") as _:
+                nutrition_info = snack.get_nutrition_info()
+                total_calories += nutrition_info.calories
+                task = api.add_task(
+                    content=f"{snack.name} [{nutrition_info.calories}]",
+                    labels=get_full_label_names(api, ["food"]),
+                    project_id=meal_type.get_project_id(),
+                    due_date=date.strftime("%Y-%m-%d")
+                )
+                api.add_comment(task_id=task.id, content=str(nutrition_info))
+                print(f"Added {snack.name} to plan")
+
+        if not questionary.confirm("Add another?").ask():
+            break
+
+    print(f"Total calories for planned items: {total_calories}")
 #
 # Helpers
 #
@@ -266,3 +399,38 @@ def get_food_items():
     cursor.close()
     conn.close()
     return food_items
+
+
+def get_meals(food_items):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM meals")
+
+    meals = []
+    for row in cursor.fetchall():
+        meals.append(Meal.from_db_row(row))
+
+    for meal in meals:
+        cursor.execute("SELECT * FROM meals_food_items WHERE meal_id = ?", (meal.id,))
+        for row in cursor.fetchall():
+            item_id = row[1]
+            quantity = row[2]
+            item = next((item for item in food_items if item.id == item_id), None)
+            meal.add_item(item, quantity)
+
+    cursor.close()
+    conn.close()
+    return meals
+
+
+def date_picker():
+    year = questionary.text("Year (YYYY):").ask()
+    month = questionary.text("Month (MM):").ask()
+    day = questionary.text("Day (DD):").ask()
+    
+    try:
+        date = datetime(year=int(year), month=int(month), day=int(day))
+        return date
+    except ValueError:
+        print("Invalid date. Please try again.")
+        return date_picker()
