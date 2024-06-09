@@ -13,21 +13,35 @@ from todoist.tasks import get_full_label_names
 LUNCH_PROJECT_ID = 2321701711
 DINNER_PROJECT_ID = 2321953095
 NIGHT_PROJECT_ID = 2334412048
-SNACKS_PROJECT_ID = 2321953196
+SNACKS_BEFORE_LUNCH_PROJECT_ID = 2334492361
+SNACKS_AFTER_LUNCH_PROJECT_ID = 2334492378
+SNACKS_AFTER_DINNER_PROJECT_ID = 2334492398
+
+
+class SnackType(Enum):
+    BeforeLunch = 1
+    AfterLunch = 2
+    AfterDinner = 3
+
+    def get_project_id(self):
+        project_ids = {
+            SnackType.BeforeLunch: SNACKS_BEFORE_LUNCH_PROJECT_ID,
+            SnackType.AfterLunch: SNACKS_AFTER_LUNCH_PROJECT_ID,
+            SnackType.AfterDinner: SNACKS_AFTER_DINNER_PROJECT_ID
+        }
+        return project_ids[self]
 
 
 class MealType(Enum):
     Lunch = 1
     Dinner = 2
     Night = 3
-    Snack = 4
 
     def get_project_id(self):
         project_ids = {
             MealType.Lunch: LUNCH_PROJECT_ID,
             MealType.Dinner: DINNER_PROJECT_ID,
             MealType.Night: NIGHT_PROJECT_ID,
-            MealType.Snack: SNACKS_PROJECT_ID
         }
         return project_ids[self]
 
@@ -287,19 +301,24 @@ def plan(api):
         elif choice == "snack":
             selection = questionary.select(
                 "Snack: ",
-                choices=[item.name for item in food_items if item.snack]).ask()
-            snack = next((item for item in food_items if item.name == selection))
+                choices=sorted([item.name for item in food_items if item.snack])).ask()
+            snack = next(item for item in food_items if item.name == selection)
 
-            # Snacks have their own meal type, and in that case, they are not eaten as part of
-            # another meal. However, they can also be part of another meal. For example, at lunch,
-            # you could have a chocolate bar and/or packet of crisps with your sandwiches.
-            meal_type = MealType.Snack
             if questionary.confirm("Is the snack part of a meal?").ask():
                 meal_type_choices = [
-                    meal_type.name for meal_type in MealType if not meal_type == MealType.Snack
+                    MealType.Lunch.name,
+                    MealType.Dinner.name,
+                    MealType.Night.name,
                 ]
                 meal_type = questionary.select("Meal for snack: ", choices=meal_type_choices).ask()
                 meal_type = MealType[meal_type]
+                project_id = meal_type.get_project_id()
+            else:
+                selection = questionary.select(
+                    "Snack type: ",
+                    choices=[item.name for item in SnackType]).ask()
+                snack_type = next(item for item in SnackType if item.name == selection)
+                project_id = snack_type.get_project_id()
 
             console = Console()
             with console.status("[bold green]Creating task on Todoist...") as _:
@@ -308,7 +327,7 @@ def plan(api):
                 task = api.add_task(
                     content=f"{snack.name} [{nutrition_info.calories}]",
                     labels=get_full_label_names(api, ["food"]),
-                    project_id=meal_type.get_project_id(),
+                    project_id=project_id,
                     due_date=date.strftime("%Y-%m-%d")
                 )
                 api.add_comment(task_id=task.id, content=str(nutrition_info))
@@ -345,6 +364,25 @@ def get_db_connection():
         (4, 'Snacks');
         """
     )
+    cursor.execute("DELETE FROM meal_types WHERE id = 4")
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS snack_types (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL
+        );
+        """
+    )
+    cursor.execute(
+        """
+        INSERT OR IGNORE INTO snack_types (id, name) VALUES
+        (1, 'Before Lunch'),
+        (2, 'After Lunch'),
+        (3, 'After Dinner');
+        """
+    )
+
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS food_items (
