@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.2] - 2024-06-09
+
+### 🚀 Features
+
+- Provide `food new-item` cmd
+- Provide `food new-meal` cmd
+- Provide `food plan` cmd
+
+### 🚜 Refactor
+
+- Break `cmd` module down into smaller modules
+
 ## [0.2.1] - 2024-06-06
 
 ### 🚀 Features
