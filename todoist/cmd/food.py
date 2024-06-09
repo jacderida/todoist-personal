@@ -122,7 +122,7 @@ class Meal:
         meal_type_choices = [meal_type.name for meal_type in MealType]
         meal_type = questionary.select("Meal type: ", choices=meal_type_choices).ask()
 
-        food_item_choices = [food_item.name for food_item in food_items]
+        food_item_choices = sorted([food_item.name for food_item in food_items])
         selected_food_names = questionary.checkbox("Food items: ", choices=food_item_choices).ask()
         selected_food_items = []
         for name in selected_food_names:
