@@ -95,7 +95,7 @@ class Meal:
                     INSERT INTO meals_food_items (meal_id, food_item_id, quantity) 
                     VALUES (?, ?, ?)
                     """,
-                    (self.id, item.id, self.items_with_quantities[self.id])
+                    (self.id, item.id, self.items_with_quantities[item.id])
                 )
 
             conn.commit()
