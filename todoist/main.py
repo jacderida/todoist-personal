@@ -3,7 +3,7 @@ import os
 import sys
 
 from .cmd.dev import dev_releases_aw_release_checklist
-from .cmd.food import new_item, new_meal, plan
+from .cmd.food import add_shopping_item, new_item, new_meal, plan
 from .cmd.sept11 import sept11_nist_assoc_dir_with_tape, sept11_nist_locate_tape
 
 from todoist_api_python.api import TodoistAPI
@@ -61,9 +61,11 @@ Each directory in the list will be created as a task.""")
         dest="food_command",
         help="Manage tasks for food",
         required=True)
+    food_subparsers.add_parser(
+        "add-shopping-item", help="Add a food item to the shopping list")
     food_subparsers.add_parser("new-item", help="Create a new food item in the database")
     food_subparsers.add_parser("new-meal", help="Create a new meal in the database")
-    food_subparsers.add_parser("plan", help="Plan eating for a day")
+    food_subparsers.add_parser("plan", help="Add meals or snacks to a daily meal plan")
 
     return parser.parse_args()
 
@@ -85,7 +87,9 @@ def main():
             if args.releases_command == "aw-release-checklist":
                 dev_releases_aw_release_checklist(api)
     elif args.command == "food":
-        if args.food_command == "new-item":
+        if args.food_command == "add-shopping-item":
+            add_shopping_item(api)
+        elif args.food_command == "new-item":
             new_item()
         elif args.food_command == "new-meal":
             new_meal()

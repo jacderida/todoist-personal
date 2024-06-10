@@ -10,6 +10,7 @@ from rich.console import Console
 from todoist.tasks import get_full_label_names
 
 
+SHOPPING_LIST_PROJECT_ID = 2334548408
 LUNCH_PROJECT_ID = 2321701711
 DINNER_PROJECT_ID = 2321953095
 NIGHT_PROJECT_ID = 2334412048
@@ -136,14 +137,7 @@ class Meal:
         meal_type_choices = [meal_type.name for meal_type in MealType]
         meal_type = questionary.select("Meal type: ", choices=meal_type_choices).ask()
 
-        food_item_choices = sorted([food_item.name for food_item in food_items])
-        selected_food_names = questionary.checkbox("Food items: ", choices=food_item_choices).ask()
-        selected_food_items = []
-        for name in selected_food_names:
-            found_item = next((item for item in food_items if item.name == name), None)
-            if found_item:
-                selected_food_items.append(found_item)
-
+        selected_food_items = select_food_items(food_items)
         items_with_quantities = {}
         for item in selected_food_items:
             quantity = int(questionary.text(f"{item.name} quantity: ", default="1").ask())
@@ -247,6 +241,21 @@ class FoodItem:
 #
 # Command processing
 #
+def add_shopping_item(api):
+    food_items = get_food_items()
+    print("Select items to add to the shopping list")
+    selected_food_items = select_food_items(food_items)
+    console = Console()
+    with console.status("[bold green]Adding items to shopping list...") as _:
+        for selected_item in selected_food_items:
+            api.add_task(
+                content=f"{selected_item.name}",
+                labels=get_full_label_names(api, ["food", "buy"]),
+                project_id=SHOPPING_LIST_PROJECT_ID,
+            )
+            print(f"Added {selected_item.name} to shopping list")
+
+
 def new_item():
     conn = get_db_connection()
     new_item = FoodItem.create()
@@ -287,7 +296,7 @@ def plan(api):
             meal = next((meal for meal in meals if meal.name == name))
 
             console = Console()
-            with console.status("[bold green]Creating task on Todoist...") as _:
+            with console.status("[bold green]Creating meal on Todoist...") as _:
                 nutrition_info = meal.get_nutrition_info()
                 total_calories += nutrition_info.calories
                 task = api.add_task(
@@ -321,7 +330,7 @@ def plan(api):
                 project_id = snack_type.get_project_id()
 
             console = Console()
-            with console.status("[bold green]Creating task on Todoist...") as _:
+            with console.status("[bold green]Creating snack on Todoist...") as _:
                 nutrition_info = snack.get_nutrition_info()
                 total_calories += nutrition_info.calories
                 task = api.add_task(
@@ -472,3 +481,14 @@ def date_picker():
     except ValueError:
         print("Invalid date. Please try again.")
         return date_picker()
+
+
+def select_food_items(food_items):
+    food_item_choices = sorted([food_item.name for food_item in food_items])
+    selected_food_names = questionary.checkbox("Food items: ", choices=food_item_choices).ask()
+    selected_food_items = []
+    for name in selected_food_names:
+        found_item = next((item for item in food_items if item.name == name), None)
+        if found_item:
+            selected_food_items.append(found_item)
+    return selected_food_items
