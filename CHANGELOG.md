@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.3] - 2024-06-10
+
+### 🚀 Features
+
+- Sort food items by name in `new-meal` cmd
+- Introduce categories/type for snacks
+- Provide `add-shopping-item` cmd
+
+### 🐛 Bug Fixes
+
+- `new-meal` cmd saves without key error
+
 ## [0.2.2] - 2024-06-09
 
 ### 🚀 Features
