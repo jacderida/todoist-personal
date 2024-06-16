@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.4] - 2024-06-16
+
+### 🚀 Features
+
+- Provide default values for plan date
+- Provide `--repeat` arg for `food plan` cmd
+
 ## [0.2.3] - 2024-06-10
 
 ### 🚀 Features
