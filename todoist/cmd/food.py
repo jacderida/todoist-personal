@@ -471,8 +471,9 @@ def get_meals(food_items):
 
 
 def date_picker():
-    year = questionary.text("Year (YYYY):").ask()
-    month = questionary.text("Month (MM):").ask()
+    current = datetime.now()
+    year = questionary.text("Year (YYYY):", default=str(current.year)).ask()
+    month = questionary.text("Month (MM):", default=str(current.month).zfill(2)).ask()
     day = questionary.text("Day (DD):").ask()
     
     try:
