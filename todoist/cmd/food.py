@@ -2,7 +2,7 @@ import os
 import questionary
 import sqlite3
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum
 
 from rich.console import Console
@@ -277,15 +277,29 @@ def new_meal():
     print(meal)
 
 
-def plan(api):
+def plan(api, repeat_mode):
     food_items = get_food_items()
     meals = get_meals(food_items)
 
-    print("Provide the date for the meal plan")
-    date = date_picker()
+    if repeat_mode:
+        print("Provide the start date for the meal/snack")
+        start_date = date_picker()
+        print("Provide the end date for the meal/snack")
+        end_date = date_picker()
+    else:
+        print("Provide the date for the meal plan")
+        start_date = date_picker()
+        end_date = None
 
-    total_calories = 0
     while True:
+        count = 1
+        entries = 1
+        date = start_date
+        if end_date:
+            count = 0
+            entries = end_date.day - start_date.day
+        total_calories = 0
+
         choice = questionary.select(
             "Add a meal or a snack to the plan?", choices=["meal", "snack"]).ask()
         if choice == "meal":
@@ -297,16 +311,20 @@ def plan(api):
 
             console = Console()
             with console.status("[bold green]Creating meal on Todoist...") as _:
-                nutrition_info = meal.get_nutrition_info()
-                total_calories += nutrition_info.calories
-                task = api.add_task(
-                    content=f"{meal.name} [{nutrition_info.calories}]",
-                    labels=get_full_label_names(api, ["food"]),
-                    project_id=meal.meal_type.get_project_id(),
-                    due_date=date.strftime("%Y-%m-%d")
-                )
-                api.add_comment(task_id=task.id, content=str(nutrition_info))
-                print(f"Added {meal.name} to plan")
+                while count <= entries:
+                    nutrition_info = meal.get_nutrition_info()
+                    total_calories += nutrition_info.calories
+                    task = api.add_task(
+                        content=f"{meal.name} [{nutrition_info.calories}]",
+                        labels=get_full_label_names(api, ["food"]),
+                        project_id=meal.meal_type.get_project_id(),
+                        due_date=date.strftime("%Y-%m-%d")
+                    )
+                    api.add_comment(task_id=task.id, content=str(nutrition_info))
+                    print(f"Added {meal.name} to {date:%Y-%m-%d} plan")
+
+                    date = date + timedelta(days=1)
+                    count += 1
         elif choice == "snack":
             selection = questionary.select(
                 "Snack: ",
@@ -331,17 +349,20 @@ def plan(api):
 
             console = Console()
             with console.status("[bold green]Creating snack on Todoist...") as _:
-                nutrition_info = snack.get_nutrition_info()
-                total_calories += nutrition_info.calories
-                task = api.add_task(
-                    content=f"{snack.name} [{nutrition_info.calories}]",
-                    labels=get_full_label_names(api, ["food"]),
-                    project_id=project_id,
-                    due_date=date.strftime("%Y-%m-%d")
-                )
-                api.add_comment(task_id=task.id, content=str(nutrition_info))
-                print(f"Added {snack.name} to plan")
+                while count <= entries:
+                    nutrition_info = snack.get_nutrition_info()
+                    total_calories += nutrition_info.calories
+                    task = api.add_task(
+                        content=f"{snack.name} [{nutrition_info.calories}]",
+                        labels=get_full_label_names(api, ["food"]),
+                        project_id=project_id,
+                        due_date=date.strftime("%Y-%m-%d")
+                    )
+                    api.add_comment(task_id=task.id, content=str(nutrition_info))
+                    print(f"Added {snack.name} to {date:%Y-%m-%d} plan")
 
+                    date = date + timedelta(days=1)
+                    count += 1
         if not questionary.confirm("Add another?").ask():
             break
 

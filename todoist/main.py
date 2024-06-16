@@ -65,7 +65,11 @@ Each directory in the list will be created as a task.""")
         "add-shopping-item", help="Add a food item to the shopping list")
     food_subparsers.add_parser("new-item", help="Create a new food item in the database")
     food_subparsers.add_parser("new-meal", help="Create a new meal in the database")
-    food_subparsers.add_parser("plan", help="Add meals or snacks to a daily meal plan")
+    plan_parser = food_subparsers.add_parser("plan", help="Add meals or snacks to a daily meal plan")
+    plan_parser.add_argument(
+        "--repeat",
+        action="store_true",
+        help="Set this flag to work in repeat mode. Useful for adding the same item over a date range.")
 
     return parser.parse_args()
 
@@ -94,7 +98,7 @@ def main():
         elif args.food_command == "new-meal":
             new_meal()
         elif args.food_command == "plan":
-            plan(api)
+            plan(api, args.repeat)
 
 
 if __name__ == "__main__":
