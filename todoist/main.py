@@ -4,7 +4,8 @@ import sys
 
 from .cmd.dev import dev_releases_aw_release_checklist
 from .cmd.food import add_shopping_item, new_item, new_meal, plan
-from .cmd.sept11 import sept11_nist_assoc_dir_with_tape, sept11_nist_locate_tape
+from .cmd.sept11 import \
+    sept11_nist_add_uncategorized, sept11_nist_assoc_dir_with_tape, sept11_nist_locate_tape
 
 from todoist_api_python.api import TodoistAPI
 
@@ -42,6 +43,9 @@ def get_args():
         dest="nist_command",
         help="NIST-related tasks",
         required=True)
+    nist_subparsers.add_parser(
+        "add-uncategorized",
+        help="Create a task for adding an uncategorized directory or file")
     assoc_parser = nist_subparsers.add_parser(
         "assoc-dir-with-tape",
         help="Create a task for associating a directory with a tape from NIST's database")
@@ -82,7 +86,9 @@ def main():
     args = get_args()
     if args.command == "sept11":
         if args.sept11_command == "nist":
-            if args.nist_command == "assoc-dir-with-tape":
+            if args.nist_command == "add-uncategorized":
+                sept11_nist_add_uncategorized(api)
+            elif args.nist_command == "assoc-dir-with-tape":
                 sept11_nist_assoc_dir_with_tape(api, args.dir_list_path)
             elif args.nist_command == "locate-tape":
                 sept11_nist_locate_tape(api, args.tape_list_path)
