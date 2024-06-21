@@ -2,7 +2,7 @@ import argparse
 import os
 import sys
 
-from .cmd.dev import dev_releases_aw_release_checklist
+from .cmd.dev import dev_releases_aw_release_checklist, dev_tests_nodeman_linux_smoke_test
 from .cmd.food import add_shopping_item, new_item, new_meal, plan
 from .cmd.sept11 import \
     sept11_nist_add_uncategorized, sept11_nist_assoc_dir_with_tape, sept11_nist_locate_tape
@@ -28,6 +28,15 @@ def get_args():
     releases_subparsers.add_parser(
         "aw-release-checklist",
         help="Create a task for an Archive Witness release checklist")
+    tests_parser = dev_subparsers.add_parser("tests", help="Manage tasks related to testing")
+    tests_subparsers = tests_parser.add_subparsers(
+        dest="tests_command", help="Tests-related tasks", required=True)
+    tests_subparsers.add_parser(
+        "nodeman-linux-smoke-test",
+        help="Create a task with a checklist for a Linux smoke test for the node manager")
+    tests_subparsers.add_parser(
+        "nodeman-win-smoke-test",
+        help="Create a task with a checklist for a Windows smoke test for the node manager")
 
     sept11_parser = main_subparser.add_parser(
         "sept11",
@@ -96,6 +105,9 @@ def main():
         if args.dev_command == "releases":
             if args.releases_command == "aw-release-checklist":
                 dev_releases_aw_release_checklist(api)
+        elif args.dev_command == "tests":
+            if args.tests_command == "nodeman-linux-smoke-test":
+                dev_tests_nodeman_linux_smoke_test(api)
     elif args.command == "food":
         if args.food_command == "add-shopping-item":
             add_shopping_item(api)

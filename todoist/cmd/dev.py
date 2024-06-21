@@ -8,6 +8,7 @@ from todoist.tasks import create_task, create_subtask, WorkType, TaskType
 
 ARCHIVE_WIT_PROJECT_ID = 2324943655
 ARCHIVE_WIT_PATH = "/home/chris/dev/github.com/jacderida/archive-witness-db-tools"
+NODE_MANAGER_PROJECT_ID = 2321515089
 
 
 def dev_releases_aw_release_checklist(api):
@@ -124,6 +125,88 @@ def dev_releases_aw_release_checklist(api):
         work_type,
         task.id)
 
+
+def dev_tests_nodeman_linux_smoke_test(api):
+    work_type = WorkType.WORK
+    task_type = TaskType.DEV
+
+    task = create_task(
+        api,
+        "Node Manager smoke test on Linux",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        apply_date=True)
+    create_subtask(
+        api,
+        "Add 20 nodes: `sudo safenode-manager add --count 20 --node-port 12000-12019 --peer <peer-id>`",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "Status should be `ADDED`: `sudo safenode-manager status`",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "Start nodes: `sudo safenode-manager start`",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "Status should be `RUNNING`: `sudo safenode-manager status`",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "Stop the nodes: `sudo safenode-manager stop`",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "Status should be `STOPPED`: `sudo safenode-manager status`",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "Remove the nodes: `sudo safenode-manager remove`",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "No services should be shown: `sudo safenode-manager status",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "Status should be `REMOVED` in detailed view: `sudo safenode-manager status --details`",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "Remove all traces: `sudo safenode-manager reset`",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
 #
 # Helpers
 #
