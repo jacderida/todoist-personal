@@ -5,7 +5,7 @@ import sys
 from .cmd.dev import dev_releases_aw_release_checklist, \
     dev_tests_nodeman_linux_smoke_test, \
     dev_tests_nodeman_windows_smoke_test
-from .cmd.food import add_shopping_item, new_item, new_meal, plan
+from .cmd.food import items_add, items_ls, items_new, meals_ls, meals_new, plan
 from .cmd.sept11 import \
     sept11_nist_add_uncategorized, sept11_nist_assoc_dir_with_tape, sept11_nist_locate_tape
 
@@ -16,23 +16,23 @@ def get_args():
     parser = argparse.ArgumentParser(description="Create tasks in Todoist")
     main_subparser = parser.add_subparsers(dest="command", required=True)
 
-    dev_parser = main_subparser.add_parser("dev", help="Manage dev tasks")
+    dev_parser = main_subparser.add_parser("dev", help="Create tasks for development")
     dev_subparsers = dev_parser.add_subparsers(
         dest="dev_command",
-        help="Manage dev tasks",
+        help="Create tasks for development",
         required=True)
     release_parser = dev_subparsers.add_parser(
-        "releases", help="Manage tasks related to release checklists")
+        "releases", help="Create tasks for release checklists")
     releases_subparsers = release_parser.add_subparsers(
         dest="releases_command",
-        help="Release-related tasks",
+        help="Create tasks for release checklists",
         required=True)
     releases_subparsers.add_parser(
         "aw-release-checklist",
         help="Create a task for an Archive Witness release checklist")
-    tests_parser = dev_subparsers.add_parser("tests", help="Manage tasks related to testing")
+    tests_parser = dev_subparsers.add_parser("tests", help="Create tasks for testing")
     tests_subparsers = tests_parser.add_subparsers(
-        dest="tests_command", help="Tests-related tasks", required=True)
+        dest="tests_command", help="Create tasks for testing", required=True)
     tests_subparsers.add_parser(
         "nodeman-linux-smoke-test",
         help="Create a task with a checklist for a Linux smoke test for the node manager")
@@ -42,17 +42,17 @@ def get_args():
 
     sept11_parser = main_subparser.add_parser(
         "sept11",
-        help="Manage tasks for the 9/11 Archiving project")
+        help="Create tasks for 9/11 archiving/research")
     sept11_subparsers = sept11_parser.add_subparsers(
         dest="sept11_command",
-        help="Manage tasks for the 9/11 Archiving project",
+        help="Create tasks for 9/11 archiving/research",
         required=True)
     nist_parser = sept11_subparsers.add_parser(
         "nist",
-        help="Manage tasks for NIST")
+        help="Create tasks for NIST FOIA archiving/research/development")
     nist_subparsers = nist_parser.add_subparsers(
         dest="nist_command",
-        help="NIST-related tasks",
+        help="Create tasks for NIST FOIA archiving/research/development",
         required=True)
     nist_subparsers.add_parser(
         "add-uncategorized",
@@ -71,16 +71,24 @@ Each directory in the list will be created as a task.""")
         help="Create a task for locating a tape from NIST's database in the release files")
     locate_parser.add_argument("--tape-list-path")
 
-    food_parser = main_subparser.add_parser("food", help="Manage tasks for food")
+    food_parser = main_subparser.add_parser("food", help="Create tasks for food management")
     food_subparsers = food_parser.add_subparsers(
-        dest="food_command",
-        help="Manage tasks for food",
-        required=True)
-    food_subparsers.add_parser(
-        "add-shopping-item", help="Add a food item to the shopping list")
-    food_subparsers.add_parser("new-item", help="Create a new food item in the database")
-    food_subparsers.add_parser("new-meal", help="Create a new meal in the database")
-    plan_parser = food_subparsers.add_parser("plan", help="Add meals or snacks to a daily meal plan")
+        dest="food_command", help="Create tasks for food management", required=True)
+
+    items_parser = food_subparsers.add_parser("items", help="Manage food items")
+    items_subparsers = items_parser.add_subparsers(
+        dest="items_command", help="Manage food items", required=True)
+    items_subparsers.add_parser("add", help="Add an item to the shopping list")
+    items_subparsers.add_parser("ls", help="List all the available food items")
+    items_subparsers.add_parser("new", help="Create a new food item")
+
+    meals_parser = food_subparsers.add_parser("meals", help="Manage meals")
+    meals_subparsers = meals_parser.add_subparsers(
+        dest="meals_command", help="Manage meals", required=True)
+    meals_subparsers.add_parser("ls", help="List all the available meals")
+    meals_subparsers.add_parser("new", help="Create a new meal")
+
+    plan_parser = food_subparsers.add_parser("plan", help="Create tasks for food planning")
     plan_parser.add_argument(
         "--repeat",
         action="store_true",
@@ -113,12 +121,18 @@ def main():
             elif args.tests_command == "nodeman-win-smoke-test":
                 dev_tests_nodeman_windows_smoke_test(api)
     elif args.command == "food":
-        if args.food_command == "add-shopping-item":
-            add_shopping_item(api)
-        elif args.food_command == "new-item":
-            new_item()
-        elif args.food_command == "new-meal":
-            new_meal()
+        if args.food_command == "items":
+            if args.items_command == "add":
+                items_add(api)
+            elif args.items_command == "ls":
+                items_ls()
+            elif args.items_command == "new":
+                items_new()
+        elif args.food_command == "meals":
+            if args.meals_command == "ls":
+                meals_ls()
+            elif args.meals_command == "new":
+                meals_new()
         elif args.food_command == "plan":
             plan(api, args.repeat)
 

@@ -241,7 +241,7 @@ class FoodItem:
 #
 # Command processing
 #
-def add_shopping_item(api):
+def items_add(api):
     food_items = get_food_items()
     print("Select items to add to the shopping list")
     selected_food_items = select_food_items(food_items)
@@ -256,7 +256,11 @@ def add_shopping_item(api):
             print(f"Added {selected_item.name} to shopping list")
 
 
-def new_item():
+def items_ls():
+    pass
+
+
+def items_new():
     conn = get_db_connection()
     new_item = FoodItem.create()
     new_item.save(conn)
@@ -266,7 +270,11 @@ def new_item():
     print(new_item)
 
 
-def new_meal():
+def meals_ls():
+    pass
+
+
+def meals_new():
     food_items = get_food_items()
     conn = get_db_connection()
     meal = Meal.create(food_items)
