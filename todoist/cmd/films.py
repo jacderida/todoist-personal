@@ -18,6 +18,6 @@ def films_schedule(api):
     with console.status("[bold green]Creating task on Todoist...") as _:
         api.add_task(
             content=f"Watch *{film_title}*",
-            labels=get_full_label_names(api, ["films", "entertainment"]),
+            labels=get_full_label_names(api, ["films", "entertainment", "home"]),
             project_id=ENTERTAINMENT_PROJECT_ID,
             due_date=date.strftime("%Y-%m-%d"))
