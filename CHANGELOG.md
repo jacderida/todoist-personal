@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2024-06-23
+
+### 🚀 Features
+
+- Provide `sept11 nist add-uncategorized` cmd
+- Provide `dev tests nodeman-linux-smoke-test` cmd
+- Provide `dev tests nodeman-win-smoke-test` cmd
+- Provide `food items ls` command
+- Provide `food meals ls` command
+- Provide `films schedule` command
+
+### ⚙️ Miscellaneous Tasks
+
+- [**breaking**] Reorganise command menu
+- Organise command menu alphabetically
+
 ## [0.2.4] - 2024-06-16
 
 ### 🚀 Features

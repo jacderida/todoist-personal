@@ -6,7 +6,7 @@ with open("requirements.txt") as requirements_file:
 
 setup(
     name="todoist-personal",
-    version="0.2.4",
+    version="0.3.0",
     packages=find_packages(),
     entry_points={
         "console_scripts": [
