@@ -40,6 +40,29 @@ def get_args():
         "nodeman-win-smoke-test",
         help="Create a task with a checklist for a Windows smoke test for the node manager")
 
+    food_parser = main_subparser.add_parser("food", help="Create tasks for food management")
+    food_subparsers = food_parser.add_subparsers(
+        dest="food_command", help="Create tasks for food management", required=True)
+
+    items_parser = food_subparsers.add_parser("items", help="Manage food items")
+    items_subparsers = items_parser.add_subparsers(
+        dest="items_command", help="Manage food items", required=True)
+    items_subparsers.add_parser("add", help="Add an item to the shopping list")
+    items_subparsers.add_parser("ls", help="List all the available food items")
+    items_subparsers.add_parser("new", help="Create a new food item")
+
+    meals_parser = food_subparsers.add_parser("meals", help="Manage meals")
+    meals_subparsers = meals_parser.add_subparsers(
+        dest="meals_command", help="Manage meals", required=True)
+    meals_subparsers.add_parser("ls", help="List all the available meals")
+    meals_subparsers.add_parser("new", help="Create a new meal")
+
+    plan_parser = food_subparsers.add_parser("plan", help="Create tasks for food planning")
+    plan_parser.add_argument(
+        "--repeat",
+        action="store_true",
+        help="Set this flag to work in repeat mode. Useful for adding the same item over a date range.")
+
     sept11_parser = main_subparser.add_parser(
         "sept11",
         help="Create tasks for 9/11 archiving/research")
@@ -71,29 +94,6 @@ Each directory in the list will be created as a task.""")
         help="Create a task for locating a tape from NIST's database in the release files")
     locate_parser.add_argument("--tape-list-path")
 
-    food_parser = main_subparser.add_parser("food", help="Create tasks for food management")
-    food_subparsers = food_parser.add_subparsers(
-        dest="food_command", help="Create tasks for food management", required=True)
-
-    items_parser = food_subparsers.add_parser("items", help="Manage food items")
-    items_subparsers = items_parser.add_subparsers(
-        dest="items_command", help="Manage food items", required=True)
-    items_subparsers.add_parser("add", help="Add an item to the shopping list")
-    items_subparsers.add_parser("ls", help="List all the available food items")
-    items_subparsers.add_parser("new", help="Create a new food item")
-
-    meals_parser = food_subparsers.add_parser("meals", help="Manage meals")
-    meals_subparsers = meals_parser.add_subparsers(
-        dest="meals_command", help="Manage meals", required=True)
-    meals_subparsers.add_parser("ls", help="List all the available meals")
-    meals_subparsers.add_parser("new", help="Create a new meal")
-
-    plan_parser = food_subparsers.add_parser("plan", help="Create tasks for food planning")
-    plan_parser.add_argument(
-        "--repeat",
-        action="store_true",
-        help="Set this flag to work in repeat mode. Useful for adding the same item over a date range.")
-
     return parser.parse_args()
 
 
@@ -103,15 +103,8 @@ def main():
         raise Exception("The TODOIST_API_TOKEN environment variable must be set")
     api = TodoistAPI(api_token)
     args = get_args()
-    if args.command == "sept11":
-        if args.sept11_command == "nist":
-            if args.nist_command == "add-uncategorized":
-                sept11_nist_add_uncategorized(api)
-            elif args.nist_command == "assoc-dir-with-tape":
-                sept11_nist_assoc_dir_with_tape(api, args.dir_list_path)
-            elif args.nist_command == "locate-tape":
-                sept11_nist_locate_tape(api, args.tape_list_path)
-    elif args.command == "dev":
+
+    if args.command == "dev":
         if args.dev_command == "releases":
             if args.releases_command == "aw-release-checklist":
                 dev_releases_aw_release_checklist(api)
@@ -135,6 +128,14 @@ def main():
                 meals_new()
         elif args.food_command == "plan":
             plan(api, args.repeat)
+    elif args.command == "sept11":
+        if args.sept11_command == "nist":
+            if args.nist_command == "add-uncategorized":
+                sept11_nist_add_uncategorized(api)
+            elif args.nist_command == "assoc-dir-with-tape":
+                sept11_nist_assoc_dir_with_tape(api, args.dir_list_path)
+            elif args.nist_command == "locate-tape":
+                sept11_nist_locate_tape(api, args.tape_list_path)
 
 
 if __name__ == "__main__":
