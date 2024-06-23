@@ -2,11 +2,12 @@ import os
 import questionary
 import sqlite3
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 from enum import Enum
 
 from rich.console import Console
 
+from todoist.helpers import date_picker
 from todoist.tasks import get_full_label_names
 
 
@@ -502,20 +503,6 @@ def get_meals(food_items):
     cursor.close()
     conn.close()
     return meals
-
-
-def date_picker():
-    current = datetime.now()
-    year = questionary.text("Year (YYYY):", default=str(current.year)).ask()
-    month = questionary.text("Month (MM):", default=str(current.month).zfill(2)).ask()
-    day = questionary.text("Day (DD):").ask()
-    
-    try:
-        date = datetime(year=int(year), month=int(month), day=int(day))
-        return date
-    except ValueError:
-        print("Invalid date. Please try again.")
-        return date_picker()
 
 
 def select_food_items(food_items):
