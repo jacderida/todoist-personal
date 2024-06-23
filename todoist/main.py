@@ -2,7 +2,9 @@ import argparse
 import os
 import sys
 
-from .cmd.dev import dev_releases_aw_release_checklist, dev_tests_nodeman_linux_smoke_test
+from .cmd.dev import dev_releases_aw_release_checklist, \
+    dev_tests_nodeman_linux_smoke_test, \
+    dev_tests_nodeman_windows_smoke_test
 from .cmd.food import add_shopping_item, new_item, new_meal, plan
 from .cmd.sept11 import \
     sept11_nist_add_uncategorized, sept11_nist_assoc_dir_with_tape, sept11_nist_locate_tape
@@ -108,6 +110,8 @@ def main():
         elif args.dev_command == "tests":
             if args.tests_command == "nodeman-linux-smoke-test":
                 dev_tests_nodeman_linux_smoke_test(api)
+            elif args.tests_command == "nodeman-win-smoke-test":
+                dev_tests_nodeman_windows_smoke_test(api)
     elif args.command == "food":
         if args.food_command == "add-shopping-item":
             add_shopping_item(api)

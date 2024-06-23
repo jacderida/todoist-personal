@@ -139,70 +139,237 @@ def dev_tests_nodeman_linux_smoke_test(api):
         apply_date=True)
     create_subtask(
         api,
-        "Add 20 nodes: `sudo safenode-manager add --count 20 --node-port 12000-12019 --peer <peer-id>`",
+        "`sudo safenode-manager add --count 20 --node-port 12000-12019 --peer <peer-id>`",
         NODE_MANAGER_PROJECT_ID,
         task_type,
         work_type,
         task.id)
     create_subtask(
         api,
-        "Status should be `ADDED`: `sudo safenode-manager status`",
+        "`sudo safenode-manager status` [should be `ADDED`]",
         NODE_MANAGER_PROJECT_ID,
         task_type,
         work_type,
         task.id)
     create_subtask(
         api,
-        "Start nodes: `sudo safenode-manager start`",
+        "`sudo safenode-manager start`",
         NODE_MANAGER_PROJECT_ID,
         task_type,
         work_type,
         task.id)
     create_subtask(
         api,
-        "Status should be `RUNNING`: `sudo safenode-manager status`",
+        "`sudo safenode-manager status` [should be `RUNNING`]",
         NODE_MANAGER_PROJECT_ID,
         task_type,
         work_type,
         task.id)
     create_subtask(
         api,
-        "Stop the nodes: `sudo safenode-manager stop`",
+        "`sudo safenode-manager stop`",
         NODE_MANAGER_PROJECT_ID,
         task_type,
         work_type,
         task.id)
     create_subtask(
         api,
-        "Status should be `STOPPED`: `sudo safenode-manager status`",
+        "`sudo safenode-manager status` [should be `STOPPED`]",
         NODE_MANAGER_PROJECT_ID,
         task_type,
         work_type,
         task.id)
     create_subtask(
         api,
-        "Remove the nodes: `sudo safenode-manager remove`",
+        "`sudo safenode-manager remove`",
         NODE_MANAGER_PROJECT_ID,
         task_type,
         work_type,
         task.id)
     create_subtask(
         api,
-        "No services should be shown: `sudo safenode-manager status",
+        "`sudo safenode-manager status` [should be empty]",
         NODE_MANAGER_PROJECT_ID,
         task_type,
         work_type,
         task.id)
     create_subtask(
         api,
-        "Status should be `REMOVED` in detailed view: `sudo safenode-manager status --details`",
+        "`sudo safenode-manager status --details` [all nodes should be `REMOVED`]",
         NODE_MANAGER_PROJECT_ID,
         task_type,
         work_type,
         task.id)
     create_subtask(
         api,
-        "Remove all traces: `sudo safenode-manager reset`",
+        "`sudo safenode-manager reset`",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+
+
+def dev_tests_nodeman_windows_smoke_test(api):
+    work_type = WorkType.WORK
+    task_type = TaskType.DEV
+
+    task = create_task(
+        api,
+        "Node Manager and Launchpad smoke test on Windows",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        apply_date=True)
+    create_subtask(
+        api,
+        "`safenode-manager add --count 20 --node-port 12000-12019 --peer <peer-id>`",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "`safenode-manager status` [should be `ADDED`]",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "`safenode-manager start`",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "`safenode-manager status` [should be `RUNNING`]",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "`safenode-manager stop`",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "`safenode-manager status` [should be `STOPPED`]",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "`safenode-manager start`",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "`safenode-manager status` [should be `RUNNING`]",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "Restart the machine",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "`safenode-manager status` [should be `STOPPED`]",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "`safenode-manager start`",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "`safenode-manager status` [should be `RUNNING`]",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "`safenode-manager stop`",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "`safenode-manager status` [should be `STOPPED`]",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "`safenode-manager reset`",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "`node-launchpad --peer <peer-id>`",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "Use `ctrl+g` to start 5 nodes (initial NAT detection takes a long time)",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "Use `ctrl+x` to stop the nodes",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "Use `ctrl+s` to start the nodes again",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "Use q to quit the launchpad",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "`node-launchpad --peer <peer-id>` [nodes should still be running]",
+        NODE_MANAGER_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "`safenode-manager reset`",
         NODE_MANAGER_PROJECT_ID,
         task_type,
         work_type,
