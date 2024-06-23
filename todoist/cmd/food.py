@@ -275,9 +275,9 @@ def items_new():
 
 def meals_ls():
     food_items = get_food_items()
-    meals = sorted(get_meals(food_items), key=lambda item: item.name)
-    for item in meals:
-        print(f"{item.name}")
+    meals = [f"{x.meal_type.name}: {x.name}" for x in get_meals(food_items)]
+    for meal in sorted(meals):
+        print(meal)
 
 
 def meals_new():
