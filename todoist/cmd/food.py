@@ -257,7 +257,9 @@ def items_add(api):
 
 
 def items_ls():
-    pass
+    items = sorted(get_food_items(), key=lambda item: item.name)
+    for item in items:
+        print(f"{item.name} [{item.calories} calories]")
 
 
 def items_new():
