@@ -336,7 +336,7 @@ def items_rm(item_id):
 
 def meals_ls():
     food_items = get_food_items()
-    meals = [f"{x.meal_type.name}: {x.name}" for x in get_meals(food_items)]
+    meals = [f"{x.meal_type.name}: {x.name} [{x.id}]" for x in get_meals(food_items)]
     for meal in sorted(meals):
         print(meal)
 
@@ -350,6 +350,14 @@ def meals_new():
     print("= Saved new meal =")
     print("==================")
     print(meal)
+
+
+def meals_rm(meal_id):
+    conn = get_db_connection()
+    delete_meal(conn, meal_id)
+    print("================")
+    print("= Meal deleted =")
+    print("================")
 
 
 def plan(api, repeat_mode):
@@ -614,3 +622,31 @@ def delete_food_item(conn, id):
         """, (id,)
     )
     conn.commit()
+
+
+def delete_meal(conn, id):
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            SELECT 1 FROM meals WHERE id = ?;
+            """, (id,)
+        )
+        meal = cursor.fetchone()
+        if not meal:
+            raise ValueError(f"Item with ID {id} does not exist")
+        
+        cursor.execute(
+            """
+            DELETE FROM meals_food_items WHERE meal_id = ?;
+            """, (id,)
+        )
+        cursor.execute(
+            """
+            DELETE FROM meals WHERE id = ?;
+            """, (id,)
+        )
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        raise e
