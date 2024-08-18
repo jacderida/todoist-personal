@@ -286,6 +286,16 @@ def items_new():
     print(new_item)
 
 
+def items_rm(item_id):
+    conn = get_db_connection()
+    if is_food_item_in_meal(conn, item_id):
+        raise Exception("This food item is already in a meal. It cannot be deleted.")
+    delete_food_item(conn, item_id)
+    print("================")
+    print("= Item deleted =")
+    print("================")
+
+
 def meals_ls():
     food_items = get_food_items()
     meals = [f"{x.meal_type.name}: {x.name}" for x in get_meals(food_items)]
@@ -527,3 +537,42 @@ def select_food_items(food_items):
         if found_item:
             selected_food_items.append(found_item)
     return selected_food_items
+
+
+def is_food_item_in_meal(conn, id):
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT 1 FROM food_items WHERE id = ?;
+        """, (id,)
+    )
+    food_item = cursor.fetchone()
+    if not food_item:
+        raise ValueError(f"Item with ID {id} does not exist")
+
+    cursor.execute(
+        """
+        SELECT 1 FROM meals_food_items WHERE food_item_id = ?;
+        """, (id,)
+    )
+    meal_item = cursor.fetchone()
+    return meal_item is not None
+
+
+def delete_food_item(conn, id):
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT 1 FROM food_items WHERE id = ?;
+        """, (id,)
+    )
+    food_item = cursor.fetchone()
+    if not food_item:
+        raise ValueError(f"Item with ID {id} does not exist")
+    
+    cursor.execute(
+        """
+        DELETE FROM food_items WHERE id = ?;
+        """, (id,)
+    )
+    conn.commit()

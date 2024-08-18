@@ -5,7 +5,7 @@ import sys
 from .cmd.dev import dev_releases_aw_release_checklist, \
     dev_tests_nodeman_linux_smoke_test, \
     dev_tests_nodeman_windows_smoke_test
-from .cmd.food import items_add, items_ls, items_new, meals_ls, meals_new, plan
+from .cmd.food import items_add, items_ls, items_new, items_rm, meals_ls, meals_new, plan
 from .cmd.films import films_schedule
 from .cmd.sept11 import \
     sept11_nist_add_uncategorized, sept11_nist_assoc_dir_with_tape, sept11_nist_locate_tape
@@ -61,6 +61,12 @@ def get_args():
         help="Print the details of each item"
     )
     items_subparsers.add_parser("new", help="Create a new food item")
+    items_rm_parser = items_subparsers.add_parser("rm", help="Remove a food item")
+    items_rm_parser.add_argument(
+        "id",
+        type=int,
+        help="The ID of the item to remove"
+    )
 
     meals_parser = food_subparsers.add_parser("meals", help="Manage meals")
     meals_subparsers = meals_parser.add_subparsers(
@@ -135,6 +141,8 @@ def main():
                 items_ls(args.details)
             elif args.items_command == "new":
                 items_new()
+            elif args.items_command == "rm":
+                items_rm(args.id)
         elif args.food_command == "meals":
             if args.meals_command == "ls":
                 meals_ls()
