@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.3] - 2024-08-18
+
+### 🚀 Features
+
+- Provide `--details` arg for `food items ls` cmd
+- Provide `food items rm` command
+- Provide `food get-calories` cmd
+- Provide `food meals rm` command
+
 ## [0.3.2] - 2024-06-23
 
 ### 🚀 Features
