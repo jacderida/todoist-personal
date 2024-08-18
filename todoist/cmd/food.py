@@ -257,10 +257,23 @@ def items_add(api):
             print(f"Added {selected_item.name} to shopping list")
 
 
-def items_ls():
+def items_ls(details):
     items = sorted(get_food_items(), key=lambda item: item.name)
     for item in items:
-        print(f"{item.name} [{item.calories} calories]")
+        if details:
+            print(f"{item.name}")
+            print(f"  ID: {item.id}")
+            print(f"  Calories: {item.calories}")
+            print(f"  Serving: {item.serving}")
+            print(f"  Protein: {item.protein}")
+            print(f"  Fat: {item.fat}")
+            print(f"  Carbohydrates: {item.carbohydrates}")
+            print(f"  Fibre: {item.fiber}")
+            print(f"  Sugar: {item.sugar}")
+            print(f"  Salt: {item.salt}")
+            print(f"  Snack: {item.snack}")
+        else:
+            print(f"{item.name} [{item.calories} calories] [{item.id}]")
 
 
 def items_new():

@@ -54,7 +54,12 @@ def get_args():
     items_subparsers = items_parser.add_subparsers(
         dest="items_command", help="Manage food items", required=True)
     items_subparsers.add_parser("add", help="Add an item to the shopping list")
-    items_subparsers.add_parser("ls", help="List all the available food items")
+    items_ls_parser = items_subparsers.add_parser("ls", help="List all the available food items")
+    items_ls_parser.add_argument(
+        "--details",
+        action="store_true",
+        help="Print the details of each item"
+    )
     items_subparsers.add_parser("new", help="Create a new food item")
 
     meals_parser = food_subparsers.add_parser("meals", help="Manage meals")
@@ -127,7 +132,7 @@ def main():
             if args.items_command == "add":
                 items_add(api)
             elif args.items_command == "ls":
-                items_ls()
+                items_ls(args.details)
             elif args.items_command == "new":
                 items_new()
         elif args.food_command == "meals":
