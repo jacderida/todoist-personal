@@ -9,7 +9,7 @@ def date_picker():
     day = questionary.text("Day (DD):").ask()
     
     try:
-        date = datetime(year=int(year), month=int(month), day=int(day))
+        date = datetime(year=int(year), month=int(month), day=int(day)).date()
         return date
     except ValueError:
         print("Invalid date. Please try again.")

@@ -5,7 +5,8 @@ import sys
 from .cmd.dev import dev_releases_aw_release_checklist, \
     dev_tests_nodeman_linux_smoke_test, \
     dev_tests_nodeman_windows_smoke_test
-from .cmd.food import items_add, items_ls, items_new, items_rm, meals_ls, meals_new, plan
+from .cmd.food import \
+    get_calories, items_add, items_ls, items_new, items_rm, meals_ls, meals_new, plan
 from .cmd.films import films_schedule
 from .cmd.sept11 import \
     sept11_nist_add_uncategorized, sept11_nist_assoc_dir_with_tape, sept11_nist_locate_tape
@@ -49,6 +50,9 @@ def get_args():
     food_parser = main_subparser.add_parser("food", help="Create tasks for food management")
     food_subparsers = food_parser.add_subparsers(
         dest="food_command", help="Create tasks for food management", required=True)
+
+    food_subparsers.add_parser(
+        "get-calories", help="Get the total calories for a given day on the plan")
 
     items_parser = food_subparsers.add_parser("items", help="Manage food items")
     items_subparsers = items_parser.add_subparsers(
@@ -134,6 +138,8 @@ def main():
         if args.films_command == "schedule":
             films_schedule(api)
     elif args.command == "food":
+        if args.food_command == "get-calories":
+            get_calories(api)
         if args.food_command == "items":
             if args.items_command == "add":
                 items_add(api)

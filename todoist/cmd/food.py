@@ -2,7 +2,7 @@ import os
 import questionary
 import sqlite3
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 from enum import Enum
 
 from rich.console import Console
@@ -11,6 +11,7 @@ from todoist.helpers import date_picker
 from todoist.tasks import get_full_label_names
 
 
+FOOD_FILTER = "7 days & ##Food"
 SHOPPING_LIST_PROJECT_ID = 2334548408
 LUNCH_PROJECT_ID = 2321701711
 DINNER_PROJECT_ID = 2321953095
@@ -242,6 +243,43 @@ class FoodItem:
 #
 # Command processing
 #
+def get_calories(api):
+    print("Select the date:")
+    date = date_picker()
+    all_food_tasks = api.get_tasks(filter=FOOD_FILTER)
+    food_by_date = [
+        x for x in all_food_tasks if datetime.strptime(x.due.date, "%Y-%m-%d").date() == date
+    ]
+
+    nutrition_info = {
+        "Calories": 0.0,
+        "Protein": 0.0,
+        "Fat": 0.0,
+        "Carbohydrates": 0.0,
+        "Fiber": 0.0,
+        "Sugar": 0.0,
+        "Salt": 0.0,
+    }
+    for task in food_by_date:
+        lines = api.get_comments(task_id=task.id)[0].content.splitlines()
+        for line in lines:
+            split = line.split(':')
+            name = split[0]
+            value = float(split[1])
+            current_value = float(nutrition_info[name])
+            nutrition_info[name] = value + current_value
+    print("==========")
+    print("  Totals  ")
+    print("==========")
+    print(f"Calories: {nutrition_info['Calories']}")
+    print(f"Protein: {nutrition_info['Protein']}")
+    print(f"Fat: {nutrition_info['Fat']}")
+    print(f"Carbohydrates: {nutrition_info['Carbohydrates']}")
+    print(f"Fiber: {nutrition_info['Fiber']}")
+    print(f"Sugar: {nutrition_info['Sugar']}")
+    print(f"Salt: {nutrition_info['Salt']}")
+
+
 def items_add(api):
     food_items = get_food_items()
     print("Select items to add to the shopping list")
