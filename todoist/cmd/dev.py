@@ -8,7 +8,129 @@ from todoist.tasks import create_task, create_subtask, WorkType, TaskType
 
 ARCHIVE_WIT_PROJECT_ID = 2324943655
 ARCHIVE_WIT_PATH = "/home/chris/dev/github.com/jacderida/archive-witness-db-tools"
+ENVIRONMENTS_PROJECT_ID = 2342779557
 NODE_MANAGER_PROJECT_ID = 2321515089
+AUTONOMI_PR_URL = "https://github.com/maidsafe/autonomi/pull/"
+AUTONOMI_RC_RELEASE_URL = "https://github.com/maidsafe/autonomi/releases/tag/rc"
+AUTONOMI_STABLE_RELEASE_URL = "https://github.com/maidsafe/autonomi/releases/tag/stable"
+
+def dev_environments_comparison(api):
+    work_type = WorkType.WORK
+    task_type = TaskType.DEV
+
+    first_environment_name = questionary.text("Name of the first environment?").ask()
+    test_type = questionary.select(
+        "TEST environment type",
+        choices=["PR", "Branch", "RC"]
+    ).ask()
+
+    test_title = ""
+    if test_type == "PR":
+        pr_number = questionary.text("PR#?").ask()
+        test_title = f"[[#{pr_number}]({AUTONOMI_PR_URL}/{pr_number})]"
+    elif test_type == "Branch":
+        branch_ref = questionary.text("Branch ref?").ask()
+        test_title = f"[`{branch_ref}`]"
+    elif test_type == "RC":
+        rc_version = questionary.text("RC version?").ask()
+        test_title = f"[[{rc_version}]({AUTONOMI_RC_RELEASE_URL}-{rc_version})]"
+
+    second_environment_name = questionary.text("Name of the second environment?").ask()
+    release_version = questionary.text("Release version?").ask()
+
+    task = create_task(
+        api,
+        (
+            f"`TEST`: `{first_environment_name}` "
+            f"{test_title} vs "
+            f"`REF`: `{second_environment_name}` "
+            f"[[{release_version}]({AUTONOMI_STABLE_RELEASE_URL}-{release_version})]"
+        ),
+        ENVIRONMENTS_PROJECT_ID,
+        task_type,
+        work_type,
+        apply_date=True)
+
+    create_subtask(
+        api,
+        f"Define specification for `{first_environment_name}`",
+        ENVIRONMENTS_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        f"Define specification for `{second_environment_name}`",
+        ENVIRONMENTS_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+
+    for env in [first_environment_name, second_environment_name]:
+        create_subtask(
+            api,
+            f"Deploy `{env}`",
+            ENVIRONMENTS_PROJECT_ID,
+            task_type,
+            work_type,
+            task.id)
+        create_subtask(
+            api,
+            f"Smoke test `{env}`",
+            ENVIRONMENTS_PROJECT_ID,
+            task_type,
+            work_type,
+            task.id)
+        create_subtask(
+            api,
+            f"Provide additional funding for `{env}` (if applicable)",
+            ENVIRONMENTS_PROJECT_ID,
+            task_type,
+            work_type,
+            task.id)
+    create_subtask(
+        api,
+        "Create comparison in the runner database",
+        ENVIRONMENTS_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "Post comparison in Slack",
+        ENVIRONMENTS_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "Process results",
+        ENVIRONMENTS_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "Record results in runner database",
+        ENVIRONMENTS_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "Drain funds from each environment",
+        ENVIRONMENTS_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    for env in [first_environment_name, second_environment_name]:
+        create_subtask(
+            api,
+            f"Destroy `{env}`",
+            ENVIRONMENTS_PROJECT_ID,
+            task_type,
+            work_type,
+            task.id)
 
 
 def dev_releases_aw_release_checklist(api):

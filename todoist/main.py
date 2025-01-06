@@ -2,14 +2,10 @@ import argparse
 import os
 import sys
 
-from .cmd.dev import dev_releases_aw_release_checklist, \
-    dev_tests_nodeman_linux_smoke_test, \
-    dev_tests_nodeman_windows_smoke_test
-from .cmd.food import \
-    get_calories, items_add, items_ls, items_new, items_rm, meals_ls, meals_new, meals_rm, plan
-from .cmd.films import films_schedule
-from .cmd.sept11 import \
-    sept11_nist_add_uncategorized, sept11_nist_assoc_dir_with_tape, sept11_nist_locate_tape
+from .cmd.dev import *
+from .cmd.food import *
+from .cmd.films import *
+from .cmd.sept11 import *
 
 from todoist_api_python.api import TodoistAPI
 
@@ -23,6 +19,17 @@ def get_args():
         dest="dev_command",
         help="Create tasks for development",
         required=True)
+
+    environments_parser = dev_subparsers.add_parser(
+        "environments", help="Create tasks related to environments")
+    environments_subparsers = environments_parser.add_subparsers(
+        dest="environments_command",
+        help="Create tasks related to environments",
+        required=True)
+    environments_subparsers.add_parser(
+        "comparison",
+        help="Create a task for comparing two environments")
+
     release_parser = dev_subparsers.add_parser(
         "releases", help="Create tasks for release checklists")
     releases_subparsers = release_parser.add_subparsers(
@@ -132,7 +139,10 @@ def main():
     args = get_args()
 
     if args.command == "dev":
-        if args.dev_command == "releases":
+        if args.dev_command == "environments":
+            if args.environments_command == "comparison":
+                dev_environments_comparison(api)
+        elif args.dev_command == "releases":
             if args.releases_command == "aw-release-checklist":
                 dev_releases_aw_release_checklist(api)
         elif args.dev_command == "tests":
