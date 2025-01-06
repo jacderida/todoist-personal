@@ -29,6 +29,9 @@ def get_args():
     environments_subparsers.add_parser(
         "comparison",
         help="Create a task for comparing two environments")
+    environments_subparsers.add_parser(
+        "upscale-test",
+        help="Create a task for deploying an environment for an upscale test")
 
     release_parser = dev_subparsers.add_parser(
         "releases", help="Create tasks for release checklists")
@@ -142,6 +145,8 @@ def main():
         if args.dev_command == "environments":
             if args.environments_command == "comparison":
                 dev_environments_comparison(api)
+            if args.environments_command == "upscale-test":
+                dev_environments_upscale_test(api)
         elif args.dev_command == "releases":
             if args.releases_command == "aw-release-checklist":
                 dev_releases_aw_release_checklist(api)

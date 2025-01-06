@@ -133,6 +133,125 @@ def dev_environments_comparison(api):
             task.id)
 
 
+def dev_environments_upscale_test(api):
+    work_type = WorkType.WORK
+    task_type = TaskType.DEV
+
+    environment_name = questionary.text("Name of the environment?").ask()
+    binary_option = questionary.select(
+        "Binary option",
+        choices=["PR", "Branch", "RC", "Stable"]
+    ).ask()
+
+    binary_option_text = ""
+    if binary_option == "PR":
+        pr_number = questionary.text("PR#?").ask()
+        binary_option_text = f"[[#{pr_number}]({AUTONOMI_PR_URL}/{pr_number})]"
+    elif binary_option == "Branch":
+        branch_ref = questionary.text("Branch ref?").ask()
+        binary_option_text = f"[`{branch_ref}`]"
+    elif binary_option == "RC":
+        rc_version = questionary.text("RC version?").ask()
+        binary_option_text = f"[[{rc_version}]({AUTONOMI_RC_RELEASE_URL}-{rc_version})]"
+    elif binary_option == "Stable":
+        stable_version = questionary.text("Stable version?").ask()
+        binary_option_text = f"[[{stable_version}]({AUTONOMI_STABLE_RELEASE_URL}-{stable_version})]"
+
+    initial_node_count = questionary.text(
+        "Initial node VM count?",
+        validate=lambda text: text.isdigit()
+    ).ask()
+    initial_node_count = int(initial_node_count)
+
+    increment_size = questionary.text(
+        "Increment size?",
+        validate=lambda text: text.isdigit()
+    ).ask()
+    increment_size = int(increment_size)
+
+    increment_count = questionary.text(
+        "How many increments?",
+        validate=lambda text: text.isdigit()
+    ).ask()
+    increment_count = int(increment_count)
+
+    task = create_task(
+        api,
+        f"Upscale Test Run: `{environment_name}` {binary_option_text}",
+        ENVIRONMENTS_PROJECT_ID,
+        task_type,
+        work_type,
+        apply_date=True)
+    create_subtask(
+        api,
+        f"Define inputs for launch network workflow",
+        ENVIRONMENTS_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+
+    start = initial_node_count
+    for _ in range(0, increment_count):
+        end = start + increment_size
+        create_subtask(
+            api,
+            f"Define specification for upscaling workflow for {start} to {end}",
+            ENVIRONMENTS_PROJECT_ID,
+            task_type,
+            work_type,
+            task.id)
+        start = end
+
+    create_subtask(
+        api,
+        f"Deploy `{environment_name}`",
+        ENVIRONMENTS_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        f"Smoke test `{environment_name}`",
+        ENVIRONMENTS_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        f"Provide additional funding for `{environment_name}`",
+        ENVIRONMENTS_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+
+    start = initial_node_count
+    for _ in range(0, increment_count):
+        end = start + increment_size
+        create_subtask(
+            api,
+            f"Run upscaling workflow for {start} to {end}",
+            ENVIRONMENTS_PROJECT_ID,
+            task_type,
+            work_type,
+            task.id)
+        start = end
+
+    create_subtask(
+        api,
+        f"Drain funds for `{environment_name}`",
+        ENVIRONMENTS_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        f"Destroy `{environment_name}`",
+        ENVIRONMENTS_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+
+
 def dev_releases_aw_release_checklist(api):
     work_type = WorkType.PERSONAL
     task_type = TaskType.DEV
