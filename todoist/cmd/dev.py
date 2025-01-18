@@ -1,4 +1,6 @@
+import os
 import questionary
+import shutil
 import toml
 
 from pathlib import Path
@@ -13,8 +15,126 @@ AUTONOMI_RC_RELEASE_URL = "https://github.com/maidsafe/autonomi/releases/tag/rc"
 AUTONOMI_STABLE_RELEASE_URL = "https://github.com/maidsafe/autonomi/releases/tag/stable"
 CI_RELEASE_PROJECT_ID = 2281501332
 CURRENT_RELEASE_CYCLE_SECTION_ID = 167691411
+DEPLOYMENTS_PROJECT_ID = 2347280389
+DEPLOYMENT_INPUTS_PATH = Path("/home/chris/dev/github.com/jacderida/ant-network-workflow-runner/inputs")
 ENVIRONMENTS_PROJECT_ID = 2342779557
 NODE_MANAGER_PROJECT_ID = 2321515089
+PROD_ENV_NAME = "PROD-01"
+
+def dev_deployments_upgrade(api):
+    work_type = WorkType.PERSONAL
+    task_type = TaskType.DEV
+
+    package_version = questionary.text("Package version?").ask()
+    stripped_version = ".".join(package_version.split(".")[:-1])
+    ant_version = questionary.text("`ant` version?").ask()
+    antnode_version = questionary.text("`antnode` version?").ask()
+    antctl_version = questionary.text("`antctl` version?").ask()
+
+    base_inputs_path = DEPLOYMENT_INPUTS_PATH / f"{stripped_version}" / "prod" / f"{package_version}"
+    if os.path.exists(base_inputs_path):
+        shutil.rmtree(base_inputs_path)
+    base_inputs_path.mkdir(parents=True, exist_ok=True)
+
+    file_number = 1
+    upgrade_antctl_path = base_inputs_path / f"{file_number:02}-{PROD_ENV_NAME}-upgrade_antctl.yml"
+    upgrade_antctl_content = (
+        f"network-name: {PROD_ENV_NAME}\n"
+        f"version: {antctl_version}"
+    )
+    with open(upgrade_antctl_path, "w") as file:
+        file.write(upgrade_antctl_content)
+    create_task(
+        api,
+        f"`{package_version}`: upgrade `antctl` to `{antctl_version}` [all hosts]",
+        DEPLOYMENTS_PROJECT_ID,
+        task_type,
+        work_type,
+        apply_date=True)
+
+    create_task(
+        api,
+        f"`{package_version}`: manually upgrade one `antnode` to `{antnode_version}` on genesis host",
+        DEPLOYMENTS_PROJECT_ID,
+        task_type,
+        work_type,
+        apply_date=True)
+
+    file_number += 1
+    peer_cache_path = base_inputs_path / f"{file_number:02}-{PROD_ENV_NAME}-upgrade_network-peer_cache_hosts.yml"
+    peer_cache_content = (
+        f"network-name: {PROD_ENV_NAME}\n"
+        f"version: {antnode_version}\n"
+        f"ansible-forks: 1\n"
+        f"interval: 300000\n"
+        f"node-type: peer-cache"
+    )
+    with open(peer_cache_path, "w") as file:
+        file.write(peer_cache_content)
+    create_task(
+        api,
+        f"`{package_version}`: upgrade `antnode` to `{antnode_version}` [peer cache hosts]",
+        DEPLOYMENTS_PROJECT_ID,
+        task_type,
+        work_type,
+        apply_date=True)
+
+    file_number = 3
+    current_host = 1
+    end_host = 39
+    increment_size = 9
+
+    initial_generic_content = (
+        f"network-name: {PROD_ENV_NAME}\n"
+        f"version: {antnode_version}\n"
+        f"ansible-forks: 1\n"
+        f"interval: 300000\n"
+        f"custom-inventory:\n"
+    )
+    while current_host < end_host:
+        current = current_host
+        end = current + increment_size
+        generic_content = initial_generic_content
+        if end > end_host:
+            end = end_host
+
+        create_task(
+            api,
+            f"`{package_version}`: upgrade `antnode` to `{antnode_version}` [generic hosts {current}-{end}]",
+            DEPLOYMENTS_PROJECT_ID,
+            task_type,
+            work_type,
+            apply_date=True)
+
+        while current <= end:
+            generic_content += f"  - {PROD_ENV_NAME}-node-{current}\n"
+            current += 1
+        generic_path = \
+            base_inputs_path / f"{file_number:02}-{PROD_ENV_NAME}-upgrade_network-generic_hosts.yml"
+        with open(generic_path, "w") as file:
+            file.write(generic_content)
+        current_host = current
+        file_number += 1
+
+    file_number += 1
+    upgrade_uploaders_path = base_inputs_path / f"{file_number:02}-{PROD_ENV_NAME}-upgrade_uploaders.yml"
+    uploaders_content = (
+        f"network-name: {PROD_ENV_NAME}\n"
+        f"version: {antnode_version}\n"
+        f"ansible-forks: 1\n"
+        f"interval: 300000\n"
+        f"node-type: peer-cache"
+    )
+    with open(upgrade_uploaders_path, "w") as file:
+        file.write(uploaders_content)
+    create_task(
+        api,
+        f"`{package_version}`: upgrade `ant` to `{ant_version}` [uploaders]",
+        DEPLOYMENTS_PROJECT_ID,
+        task_type,
+        work_type,
+        apply_date=True)
+
 
 def dev_environments_comparison(api):
     work_type = WorkType.WORK
@@ -377,6 +497,25 @@ def dev_releases_hotfix_existing_branches(api):
     stripped_version = ".".join(version.split(".")[:-1])
     branch_name = f"rc-{stripped_version}-hotfix{branch_num}"
 
+    stable_release_tasks = [
+        f"Create a `{branch_name}` branch",
+        f"Merge relevant PRs to the `{branch_name}` branch",
+        f"On `{branch_name}`: increment `release-cycle-counter` in the `release-cycle-info` file",
+        f"On `{branch_name}`: increment `RELEASE_CYCLE_COUNTER` in the `release_info.rs` file",
+        f"On `{branch_name}`: provide changelog entries",
+        f"On `{branch_name}`: bump crate versions with `cargo release version --package <crate-name> patch --execute`",
+        f"On `{branch_name}`: create a `chore(release): stable {version}` commit",
+        f"Use `git merge --no-ff {branch_name}` to merge the RC branch to `main`",
+        f"Use `git merge --no-ff {branch_name}` to merge the RC branch to `stable`",
+        "Push to `main` and `stable`",
+        "Publish `sn_logging` manually",
+        "Tag `sn_logging` manually",
+        "Push tag to origin",
+        "Prepare the release description",
+        "Run the `release` workflow on the `stable` branch with a 4MB chunk size",
+        "Update the Github release description",
+        "On `stable`: publish crates with `release-plz`",
+    ]
     task = create_task(
         api,
         f"`{version}` hotfix: stable release",
@@ -385,118 +524,14 @@ def dev_releases_hotfix_existing_branches(api):
         work_type,
         apply_date=True,
         section_id=CURRENT_RELEASE_CYCLE_SECTION_ID)
-    create_subtask(
-        api,
-        f"Create a `{branch_name}` branch",
-        CI_RELEASE_PROJECT_ID,
-        task_type,
-        work_type,
-        task.id)
-    create_subtask(
-        api,
-        f"Merge relevant PRs to the `{branch_name}` branch",
-        CI_RELEASE_PROJECT_ID,
-        task_type,
-        work_type,
-        task.id)
-    create_subtask(
-        api,
-        f"On `{branch_name}`: increment `release-cycle-counter` in the `release-cycle-info` file",
-        CI_RELEASE_PROJECT_ID,
-        task_type,
-        work_type,
-        task.id)
-    create_subtask(
-        api,
-        f"On `{branch_name}`: increment `RELEASE_CYCLE_COUNTER` in the `release_info.rs` file",
-        CI_RELEASE_PROJECT_ID,
-        task_type,
-        work_type,
-        task.id)
-    create_subtask(
-        api,
-        f"On `{branch_name}`: provide changelog entries",
-        CI_RELEASE_PROJECT_ID,
-        task_type,
-        work_type,
-        task.id)
-    create_subtask(
-        api,
-        f"On `{branch_name}`: bump crate versions with `cargo release version --package <crate-name> patch --execute`",
-        CI_RELEASE_PROJECT_ID,
-        task_type,
-        work_type,
-        task.id)
-    create_subtask(
-        api,
-        f"On `{branch_name}`: create a `chore(release): stable {version}` commit",
-        CI_RELEASE_PROJECT_ID,
-        task_type,
-        work_type,
-        task.id)
-    create_subtask(
-        api,
-        "Use `git merge --no-ff` to merge the RC branch back into `main`",
-        CI_RELEASE_PROJECT_ID,
-        task_type,
-        work_type,
-        task.id)
-    create_subtask(
-        api,
-        "Use `git merge --no-ff` to merge the RC branch back into `stable`",
-        CI_RELEASE_PROJECT_ID,
-        task_type,
-        work_type,
-        task.id)
-    create_subtask(
-        api,
-        "Push to `main` and `stable`",
-        CI_RELEASE_PROJECT_ID,
-        task_type,
-        work_type,
-        task.id)
-    create_subtask(
-        api,
-        f"Publish `sn_logging` manually",
-        CI_RELEASE_PROJECT_ID,
-        task_type,
-        work_type,
-        task.id)
-    create_subtask(
-        api,
-        f"Tag `sn_logging` manually",
-        CI_RELEASE_PROJECT_ID,
-        task_type,
-        work_type,
-        task.id)
-    create_subtask(
-        api,
-        f"Prepare the release description",
-        CI_RELEASE_PROJECT_ID,
-        task_type,
-        work_type,
-        task.id)
-    create_subtask(
-        api,
-        f"Run the `release` workflow on the `stable` branch with a 4MB chunk size",
-        CI_RELEASE_PROJECT_ID,
-        task_type,
-        work_type,
-        task.id)
-    create_subtask(
-        api,
-        f"Update the Github release description",
-        CI_RELEASE_PROJECT_ID,
-        task_type,
-        work_type,
-        task.id)
-    create_subtask(
-        api,
-        f"On `stable`: publish crates with `release-plz`",
-        CI_RELEASE_PROJECT_ID,
-        task_type,
-        work_type,
-        task.id)
+    for subtask in stable_release_tasks:
+        create_subtask(
+            api,
+            subtask,
+            CI_RELEASE_PROJECT_ID,
+            task_type,
+            work_type,
+            task.id)
 
     task = create_task(
         api,

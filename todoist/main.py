@@ -20,6 +20,16 @@ def get_args():
         help="Create tasks for development",
         required=True)
 
+    deployments_parser = dev_subparsers.add_parser(
+        "deployments", help="Create tasks for deployment checklists")
+    deployments_subparsers = deployments_parser.add_subparsers(
+        dest="deployments_command",
+        help="Create tasks for deployment checklists",
+        required=True)
+    deployments_subparsers.add_parser(
+        "upgrade",
+        help="Create a task for an upgrade deployment")
+
     environments_parser = dev_subparsers.add_parser(
         "environments", help="Create tasks related to environments")
     environments_subparsers = environments_parser.add_subparsers(
@@ -33,9 +43,9 @@ def get_args():
         "upscale-test",
         help="Create a task for deploying an environment for an upscale test")
 
-    release_parser = dev_subparsers.add_parser(
+    deployments_parser = dev_subparsers.add_parser(
         "releases", help="Create tasks for release checklists")
-    releases_subparsers = release_parser.add_subparsers(
+    releases_subparsers = deployments_parser.add_subparsers(
         dest="releases_command",
         help="Create tasks for release checklists",
         required=True)
@@ -146,7 +156,10 @@ def main():
     args = get_args()
 
     if args.command == "dev":
-        if args.dev_command == "environments":
+        if args.dev_command == "deployments":
+            if args.deployments_command == "upgrade":
+                dev_deployments_upgrade(api)
+        elif args.dev_command == "environments":
             if args.environments_command == "comparison":
                 dev_environments_comparison(api)
             if args.environments_command == "upscale-test":
