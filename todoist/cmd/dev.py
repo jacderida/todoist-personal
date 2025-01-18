@@ -8,11 +8,13 @@ from todoist.tasks import create_task, create_subtask, WorkType, TaskType
 
 ARCHIVE_WIT_PROJECT_ID = 2324943655
 ARCHIVE_WIT_PATH = "/home/chris/dev/github.com/jacderida/archive-witness-db-tools"
-ENVIRONMENTS_PROJECT_ID = 2342779557
-NODE_MANAGER_PROJECT_ID = 2321515089
 AUTONOMI_PR_URL = "https://github.com/maidsafe/autonomi/pull/"
 AUTONOMI_RC_RELEASE_URL = "https://github.com/maidsafe/autonomi/releases/tag/rc"
 AUTONOMI_STABLE_RELEASE_URL = "https://github.com/maidsafe/autonomi/releases/tag/stable"
+CI_RELEASE_PROJECT_ID = 2281501332
+CURRENT_RELEASE_CYCLE_SECTION_ID = 167691411
+ENVIRONMENTS_PROJECT_ID = 2342779557
+NODE_MANAGER_PROJECT_ID = 2321515089
 
 def dev_environments_comparison(api):
     work_type = WorkType.WORK
@@ -361,6 +363,160 @@ def dev_releases_aw_release_checklist(api):
         api,
         "Push tags: `cargo release push --execute`",
         ARCHIVE_WIT_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+
+
+def dev_releases_hotfix_existing_branches(api):
+    work_type = WorkType.PERSONAL
+    task_type = TaskType.DEV
+
+    version = questionary.text("New package version?").ask()
+    branch_num = questionary.text("Hotfix branch number?").ask()
+    stripped_version = ".".join(version.split(".")[:-1])
+    branch_name = f"rc-{stripped_version}-hotfix{branch_num}"
+
+    task = create_task(
+        api,
+        f"`{version}` hotfix: stable release",
+        CI_RELEASE_PROJECT_ID,
+        task_type,
+        work_type,
+        apply_date=True,
+        section_id=CURRENT_RELEASE_CYCLE_SECTION_ID)
+    create_subtask(
+        api,
+        f"Create a `{branch_name}` branch",
+        CI_RELEASE_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        f"Merge relevant PRs to the `{branch_name}` branch",
+        CI_RELEASE_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        f"On `{branch_name}`: increment `release-cycle-counter` in the `release-cycle-info` file",
+        CI_RELEASE_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        f"On `{branch_name}`: increment `RELEASE_CYCLE_COUNTER` in the `release_info.rs` file",
+        CI_RELEASE_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        f"On `{branch_name}`: provide changelog entries",
+        CI_RELEASE_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        f"On `{branch_name}`: bump crate versions with `cargo release version --package <crate-name> patch --execute`",
+        CI_RELEASE_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        f"On `{branch_name}`: create a `chore(release): stable {version}` commit",
+        CI_RELEASE_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "Use `git merge --no-ff` to merge the RC branch back into `main`",
+        CI_RELEASE_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "Use `git merge --no-ff` to merge the RC branch back into `stable`",
+        CI_RELEASE_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "Push to `main` and `stable`",
+        CI_RELEASE_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        f"Publish `sn_logging` manually",
+        CI_RELEASE_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        f"Tag `sn_logging` manually",
+        CI_RELEASE_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        f"Prepare the release description",
+        CI_RELEASE_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        f"Run the `release` workflow on the `stable` branch with a 4MB chunk size",
+        CI_RELEASE_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        f"Update the Github release description",
+        CI_RELEASE_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        f"On `stable`: publish crates with `release-plz`",
+        CI_RELEASE_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+
+    task = create_task(
+        api,
+        f"`{version}` hotfix: post stable release thread on Discourse",
+        CI_RELEASE_PROJECT_ID,
+        task_type,
+        work_type,
+        apply_date=True,
+        section_id=CURRENT_RELEASE_CYCLE_SECTION_ID)
+    create_subtask(
+        api,
+        "Post reply with release notes",
+        CI_RELEASE_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "Define deployment plan",
+        CI_RELEASE_PROJECT_ID,
         task_type,
         work_type,
         task.id)
