@@ -18,55 +18,60 @@ def dev_environments_comparison(api):
     work_type = WorkType.WORK
     task_type = TaskType.DEV
 
-    first_environment_name = questionary.text("Name of the first environment?").ask()
-    test_type = questionary.select(
-        "TEST environment type",
-        choices=["PR", "Branch", "RC"]
+    test_count = questionary.text(
+        "Number of test environments?",
+        validate=lambda text: text.isdigit()
     ).ask()
+    test_count = int(test_count)
 
-    test_title = ""
-    if test_type == "PR":
-        pr_number = questionary.text("PR#?").ask()
-        test_title = f"[[#{pr_number}]({AUTONOMI_PR_URL}/{pr_number})]"
-    elif test_type == "Branch":
-        branch_ref = questionary.text("Branch ref?").ask()
-        test_title = f"[`{branch_ref}`]"
-    elif test_type == "RC":
-        rc_version = questionary.text("RC version?").ask()
-        test_title = f"[[{rc_version}]({AUTONOMI_RC_RELEASE_URL}-{rc_version})]"
+    environments = []
+    task_title = ""
+    for i in range(0, test_count):
+        print(f"TEST{i + 1} environment")
+        name = questionary.text(f"Name?").ask()
+        environments.append(name)
 
-    second_environment_name = questionary.text("Name of the second environment?").ask()
+        test_type = questionary.select(
+            "Type",
+            choices=["PR", "Branch", "RC"]
+        ).ask()
+        task_title += f"TEST{i + 1}: {name} "
+        if test_type == "PR":
+            pr_number = questionary.text(
+                "PR#?",
+                validate=lambda text: text.isdigit()
+            ).ask()
+            pr_number = int(pr_number)
+            task_title += f"[[#{pr_number}]({AUTONOMI_PR_URL}/{pr_number})]"
+        elif test_type == "Branch":
+            branch_ref = questionary.text("Branch ref?").ask()
+            task_title += f"[`{branch_ref}`]"
+        elif test_type == "RC":
+            rc_version = questionary.text("RC version?").ask()
+            task_title += f"[[{rc_version}]({AUTONOMI_RC_RELEASE_URL}-{rc_version})]"
+        task_title += " vs "
+
+    ref_env_name = questionary.text("Name of the REF environment?").ask()
+    environments.append(ref_env_name)
     release_version = questionary.text("Release version?").ask()
-
+    task_title += f" REF: {ref_env_name} "
+    task_title += f"[[{release_version}]({AUTONOMI_STABLE_RELEASE_URL}-{release_version})]"
     task = create_task(
         api,
-        (
-            f"`TEST`: `{first_environment_name}` "
-            f"{test_title} vs "
-            f"`REF`: `{second_environment_name}` "
-            f"[[{release_version}]({AUTONOMI_STABLE_RELEASE_URL}-{release_version})]"
-        ),
+        task_title,
         ENVIRONMENTS_PROJECT_ID,
         task_type,
         work_type,
         apply_date=True)
 
-    create_subtask(
-        api,
-        f"Define specification for `{first_environment_name}`",
-        ENVIRONMENTS_PROJECT_ID,
-        task_type,
-        work_type,
-        task.id)
-    create_subtask(
-        api,
-        f"Define specification for `{second_environment_name}`",
-        ENVIRONMENTS_PROJECT_ID,
-        task_type,
-        work_type,
-        task.id)
-
-    for env in [first_environment_name, second_environment_name]:
+    for env in environments:
+        create_subtask(
+            api,
+            f"Define specification for `{env}`",
+            ENVIRONMENTS_PROJECT_ID,
+            task_type,
+            work_type,
+            task.id)
         create_subtask(
             api,
             f"Deploy `{env}`",
@@ -123,7 +128,7 @@ def dev_environments_comparison(api):
         task_type,
         work_type,
         task.id)
-    for env in [first_environment_name, second_environment_name]:
+    for env in environments:
         create_subtask(
             api,
             f"Destroy `{env}`",
@@ -218,24 +223,18 @@ def dev_environments_upscale_test(api):
         task.id)
     create_subtask(
         api,
-        f"Provide additional funding for `{environment_name}`",
+        f"Provide additional funding for `{environment_name}` (if applicable)",
         ENVIRONMENTS_PROJECT_ID,
         task_type,
         work_type,
         task.id)
-
-    start = initial_node_count
-    for _ in range(0, increment_count):
-        end = start + increment_size
-        create_subtask(
-            api,
-            f"Run upscaling workflow for {start} to {end}",
-            ENVIRONMENTS_PROJECT_ID,
-            task_type,
-            work_type,
-            task.id)
-        start = end
-
+    create_subtask(
+        api,
+        f"Define script for running the unattended upscale",
+        ENVIRONMENTS_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
     create_subtask(
         api,
         f"Drain funds for `{environment_name}`",
