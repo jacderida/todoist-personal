@@ -21,6 +21,90 @@ ENVIRONMENTS_PROJECT_ID = 2342779557
 NODE_MANAGER_PROJECT_ID = 2321515089
 PROD_ENV_NAME = "PROD-01"
 
+
+def dev_deployments_generate_markdown_post():
+    branch_name = questionary.text("Release branch name:").ask()
+    package_version = questionary.text("Package version:").ask()
+    antnode_version = questionary.text("antnode version:").ask()
+    ant_version = questionary.text("ant version:").ask()
+    antctl_version = questionary.text("antctl version:").ask()
+    upgrade_antctl = questionary.confirm("Will antctl be upgraded?") 
+    upgrade_antnode = questionary.confirm("Will antnode be upgraded?") 
+    upgrade_ant = questionary.confirm("Will ant be upgraded?") 
+
+    post_content = (
+        f"Release and deployment checklist/guide for [{package_version}]({AUTONOMI_STABLE_RELEASE_URL}-{package_version}).\n\n"
+        "## Perform the stable release\n\n"
+        "[ ] Finalise the changelog\n"
+        "[ ] Finalise the release note\n"
+        f"[ ] Use `git merge --no-ff {branch_name}` to merge the RC branch to `main`\n"
+        f"[ ] Use `git merge --no-ff {branch_name}` to merge the RC branch to `stable`\n"
+        "[ ] Push to `main` and `stable`\n"
+        "[ ] Publish `sn_logging` manually\n"
+        "[ ] Tag `sn_logging` manually\n"
+        "[ ] Push tag to origin\n"
+        "[ ] Prepare the release description\n"
+        "[ ] Run the `release` workflow on the `stable` branch with a 4MB chunk size\n"
+        "[ ] Update the Github release description\n"
+        "[ ] On `stable`: publish crates with `release-plz`\n"
+        "\n---\n\n"
+        "All the upgrade processes will use the [workflow runner tool](https://github.com/maidsafe/ant-network-workflow-runner)."
+        "The inputs for each of the workflows are defined in advance.\n\n"
+    )
+
+    if upgrade_antctl:
+        post_content += (
+            "## Upgrade antctl\n\n"
+            f"Upgrade `antctl` to `{antctl_version}` on `{PROD_ENV_NAME}`.\n\n"
+            "[ ] Run `upgrade-antctl` against all hosts\n"
+            "\n---\n\n"
+        )
+    if upgrade_antnode:
+        post_content += (
+            "## Upgrade antnode\n\n"
+            f"Upgrade `antnode` to `{antnode_version}` on `{PROD_ENV_NAME}`.\n\n"
+            f"This will be an *upgrade* rather than a *reset*, meaning the nodes will restart with the same peer ID and data.\n\n"
+        )
+
+        post_content += (
+            "### Manually upgrade a single node\n\n"
+            "[ ] Use `PROD-01-genesis-bootstrap` to manually upgrade one node\n"
+            "[ ] Verify the node starts and remains running\n\n"
+        )
+
+        post_content += (
+            "### Upgrade the fleet\n\n"
+            f"These items can run in parallel if desired.\n\n"
+            f"The process will run against one host at a time and there will be a 5-minute interval between processing each node.\n\n"
+        )
+
+        post_content += f"[ ] Run `upgrade-network` against peer cache hosts\n"
+        post_content += f"[ ] Run `upgrade-network` against private hosts\n"
+
+        current_host = 1
+        end_host = 39
+        increment_size = 9
+
+        while current_host < end_host:
+            start = current_host
+            end = start + increment_size
+            if end > end_host:
+                end = end_host
+            post_content += f"[ ] Run `upgrade-network` against generic hosts {start}-{end}\n"
+            current_host = end + 1
+
+        post_content += "\n---\n\n"
+    if upgrade_ant:
+        post_content += (
+            "## Upgrade ant\n\n"
+            f"Upgrade `ant` to `{ant_version}` on `{PROD_ENV_NAME}`.\n\n"
+            "[ ] Run `upgrade-uploaders` to upgrade all uploader hosts\n"
+            "\n---\n\n"
+        )
+
+    print(post_content.strip("\n---\n\n"))
+
+
 def dev_deployments_upgrade(api):
     work_type = WorkType.PERSONAL
     task_type = TaskType.DEV

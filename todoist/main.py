@@ -29,6 +29,9 @@ def get_args():
     deployments_subparsers.add_parser(
         "upgrade",
         help="Create a task for an upgrade deployment")
+    deployments_subparsers.add_parser(
+        "generate-markdown-post",
+        help="Generate the Discourse post for the deployment")
 
     environments_parser = dev_subparsers.add_parser(
         "environments", help="Create tasks related to environments")
@@ -157,7 +160,9 @@ def main():
 
     if args.command == "dev":
         if args.dev_command == "deployments":
-            if args.deployments_command == "upgrade":
+            if args.deployments_command == "generate-markdown-post":
+                dev_deployments_generate_markdown_post()
+            elif args.deployments_command == "upgrade":
                 dev_deployments_upgrade(api)
         elif args.dev_command == "environments":
             if args.environments_command == "comparison":
