@@ -23,33 +23,17 @@ PROD_ENV_NAME = "PROD-01"
 
 
 def dev_deployments_generate_markdown_post():
-    branch_name = questionary.text("Release branch name:").ask()
     package_version = questionary.text("Package version:").ask()
     antnode_version = questionary.text("antnode version:").ask()
     ant_version = questionary.text("ant version:").ask()
     antctl_version = questionary.text("antctl version:").ask()
-    upgrade_antctl = questionary.confirm("Will antctl be upgraded?") 
-    upgrade_antnode = questionary.confirm("Will antnode be upgraded?") 
-    upgrade_ant = questionary.confirm("Will ant be upgraded?") 
+    upgrade_antctl = questionary.confirm("Will antctl be upgraded?").ask()
+    upgrade_antnode = questionary.confirm("Will antnode be upgraded?").ask()
+    upgrade_ant = questionary.confirm("Will ant be upgraded?").ask()
 
     post_content = (
-        f"Release and deployment checklist/guide for [{package_version}]({AUTONOMI_STABLE_RELEASE_URL}-{package_version}).\n\n"
-        "## Perform the stable release\n\n"
-        "[ ] Finalise the changelog\n"
-        "[ ] Finalise the release note\n"
-        f"[ ] Use `git merge --no-ff {branch_name}` to merge the RC branch to `main`\n"
-        f"[ ] Use `git merge --no-ff {branch_name}` to merge the RC branch to `stable`\n"
-        "[ ] Push to `main` and `stable`\n"
-        "[ ] Publish `sn_logging` manually\n"
-        "[ ] Tag `sn_logging` manually\n"
-        "[ ] Push tag to origin\n"
-        "[ ] Prepare the release description\n"
-        "[ ] Run the `release` workflow on the `stable` branch with a 4MB chunk size\n"
-        "[ ] Update the Github release description\n"
-        "[ ] On `stable`: publish crates with `release-plz`\n"
-        "\n---\n\n"
-        "All the upgrade processes will use the [workflow runner tool](https://github.com/maidsafe/ant-network-workflow-runner)."
-        "The inputs for each of the workflows are defined in advance.\n\n"
+        f"Deployment checklist/guide for [{package_version}]({AUTONOMI_STABLE_RELEASE_URL}-{package_version}).\n\n"
+        "The [workflow runner tool](https://github.com/maidsafe/ant-network-workflow-runner/) will be used to run all the upgrades.\n\n"
     )
 
     if upgrade_antctl:
@@ -163,7 +147,26 @@ def dev_deployments_upgrade(api):
         work_type,
         apply_date=True)
 
-    file_number = 3
+    file_number += 1
+    private_path = base_inputs_path / f"{file_number:02}-{PROD_ENV_NAME}-upgrade_network-private_hosts.yml"
+    private_content = (
+        f"network-name: {PROD_ENV_NAME}\n"
+        f"version: {antnode_version}\n"
+        f"ansible-forks: 1\n"
+        f"interval: 300000\n"
+        f"node-type: private"
+    )
+    with open(private_path, "w") as file:
+        file.write(private_content)
+    create_task(
+        api,
+        f"`{package_version}`: upgrade `antnode` to `{antnode_version}` [private hosts]",
+        DEPLOYMENTS_PROJECT_ID,
+        task_type,
+        work_type,
+        apply_date=True)
+
+    file_number += 1
     current_host = 1
     end_host = 39
     increment_size = 9
@@ -204,10 +207,7 @@ def dev_deployments_upgrade(api):
     upgrade_uploaders_path = base_inputs_path / f"{file_number:02}-{PROD_ENV_NAME}-upgrade_uploaders.yml"
     uploaders_content = (
         f"network-name: {PROD_ENV_NAME}\n"
-        f"version: {antnode_version}\n"
-        f"ansible-forks: 1\n"
-        f"interval: 300000\n"
-        f"node-type: peer-cache"
+        f"version: {ant_version}\n"
     )
     with open(upgrade_uploaders_path, "w") as file:
         file.write(uploaders_content)
@@ -639,6 +639,14 @@ def dev_releases_hotfix_existing_branches(api):
         task_type,
         work_type,
         task.id)
+    task = create_task(
+        api,
+        f"`{version}` hotfix: request community announcement",
+        CI_RELEASE_PROJECT_ID,
+        task_type,
+        work_type,
+        apply_date=True,
+        section_id=CURRENT_RELEASE_CYCLE_SECTION_ID)
 
 
 def dev_tests_nodeman_linux_smoke_test(api):
