@@ -43,6 +43,9 @@ def get_args():
         "comparison",
         help="Create a task for comparing two environments")
     environments_subparsers.add_parser(
+        "test",
+        help="Create a task for deploying an environment for a test")
+    environments_subparsers.add_parser(
         "upscale-test",
         help="Create a task for deploying an environment for an upscale test")
 
@@ -167,6 +170,8 @@ def main():
         elif args.dev_command == "environments":
             if args.environments_command == "comparison":
                 dev_environments_comparison(api)
+            if args.environments_command == "test":
+                dev_environments_test(api)
             if args.environments_command == "upscale-test":
                 dev_environments_upscale_test(api)
         elif args.dev_command == "releases":
