@@ -43,6 +43,7 @@ def create_task(
     comment="",
     apply_date=False,
     section_id=None,
+    description=None
 ):
     console = Console()
     with console.status("[bold green]Creating task on Todoist...") as _:
@@ -51,6 +52,7 @@ def create_task(
             due = None if parent_id else "Today"
         task = api.add_task(
             content=content,
+            description=description,
             due_string=due,
             labels=get_full_label_names(
                 api, get_labels_for_task(task_type, work_type, extra_labels)

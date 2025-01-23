@@ -224,6 +224,16 @@ def dev_environments_comparison(api):
     work_type = WorkType.WORK
     task_type = TaskType.DEV
 
+    purpose = questionary.text("What is the purpose of the test?").ask()
+    evm_type = questionary.select(
+        "What is the EVM type?",
+        choices=["Anvil", "Sepolia"]
+    ).ask()
+    env_type = questionary.select(
+        "What type/size of environments are required?",
+        choices=["Development", "Staging"]
+    ).ask()
+
     test_count = questionary.text(
         "Number of test environments?",
         validate=lambda text: text.isdigit()
@@ -262,12 +272,14 @@ def dev_environments_comparison(api):
     release_version = questionary.text("Release version?").ask()
     task_title += f" REF: {ref_env_name} "
     task_title += f"[[{release_version}]({AUTONOMI_STABLE_RELEASE_URL}-{release_version})]"
+    task_title += f" [{env_type} Config]"
     task = create_task(
         api,
         task_title,
         ENVIRONMENTS_PROJECT_ID,
         task_type,
         work_type,
+        description=purpose,
         apply_date=True)
 
     for env in environments:
@@ -278,62 +290,53 @@ def dev_environments_comparison(api):
             task_type,
             work_type,
             task.id)
-        create_subtask(
-            api,
+
+    for env in environments:
+        for title in [
             f"Deploy `{env}`",
-            ENVIRONMENTS_PROJECT_ID,
-            task_type,
-            work_type,
-            task.id)
-        create_subtask(
-            api,
             f"Smoke test `{env}`",
-            ENVIRONMENTS_PROJECT_ID,
-            task_type,
-            work_type,
-            task.id)
+        ]:
+            create_subtask(
+                api,
+                title,
+                ENVIRONMENTS_PROJECT_ID,
+                task_type,
+                work_type,
+                task.id)
+    if evm_type == "Sepolia":
+        for env in environments:
+            create_subtask(
+                api,
+                f"Provide additional funding for `{env}`",
+                ENVIRONMENTS_PROJECT_ID,
+                task_type,
+                work_type,
+                task.id)
+
+    for title in [
+        "Create comparison in the runner database",
+        "Post comparison in Slack",
+        "Process results for generic nodes",
+        "Process results for private nodes",
+        "Post results in Slack thread",
+        "Record results in runner database",
+    ]:
         create_subtask(
             api,
-            f"Provide additional funding for `{env}` (if applicable)",
+            title,
             ENVIRONMENTS_PROJECT_ID,
             task_type,
             work_type,
             task.id)
-    create_subtask(
-        api,
-        "Create comparison in the runner database",
-        ENVIRONMENTS_PROJECT_ID,
-        task_type,
-        work_type,
-        task.id)
-    create_subtask(
-        api,
-        "Post comparison in Slack",
-        ENVIRONMENTS_PROJECT_ID,
-        task_type,
-        work_type,
-        task.id)
-    create_subtask(
-        api,
-        "Process results",
-        ENVIRONMENTS_PROJECT_ID,
-        task_type,
-        work_type,
-        task.id)
-    create_subtask(
-        api,
-        "Record results in runner database",
-        ENVIRONMENTS_PROJECT_ID,
-        task_type,
-        work_type,
-        task.id)
-    create_subtask(
-        api,
-        "Drain funds from each environment",
-        ENVIRONMENTS_PROJECT_ID,
-        task_type,
-        work_type,
-        task.id)
+    if evm_type == "Sepolia":
+        for env in environments:
+            create_subtask(
+                api,
+                f"Drain funds from {env}",
+                ENVIRONMENTS_PROJECT_ID,
+                task_type,
+                work_type,
+                task.id)
     for env in environments:
         create_subtask(
             api,
