@@ -241,7 +241,7 @@ def dev_environments_comparison(api):
     test_count = int(test_count)
 
     environments = []
-    task_title = ""
+    task_title = "Environment Comparison -- "
     for i in range(0, test_count):
         print(f"TEST{i + 1} environment")
         name = questionary.text(f"Name?").ask()
@@ -251,7 +251,7 @@ def dev_environments_comparison(api):
             "Type",
             choices=["PR", "Branch", "RC"]
         ).ask()
-        task_title += f"TEST{i + 1}: {name} "
+        task_title += f"`TEST{i + 1}`: `{name}` "
         if test_type == "PR":
             pr_number = questionary.text(
                 "PR#?",
@@ -264,13 +264,13 @@ def dev_environments_comparison(api):
             task_title += f"[`{branch_ref}`]"
         elif test_type == "RC":
             rc_version = questionary.text("RC version?").ask()
-            task_title += f"[[{rc_version}]({AUTONOMI_RC_RELEASE_URL}-{rc_version})]"
+            task_title += f"[[{rc_version} RC]({AUTONOMI_RC_RELEASE_URL}-{rc_version})]"
         task_title += " vs "
 
     ref_env_name = questionary.text("Name of the REF environment?").ask()
     environments.append(ref_env_name)
     release_version = questionary.text("Release version?").ask()
-    task_title += f" REF: {ref_env_name} "
+    task_title += f" `REF`: `{ref_env_name}` "
     task_title += f"[[{release_version}]({AUTONOMI_STABLE_RELEASE_URL}-{release_version})]"
     task_title += f" [{env_type} Config]"
     task = create_task(
@@ -392,8 +392,8 @@ def dev_environments_test(api):
         description=purpose)
     for task_title in [
         "Define inputs for launch network workflow",
-        f"Deploy",
-        f"Smoke test",
+        f"Deploy environment",
+        f"Smoke test environment",
     ]:
         create_subtask(
             api,
@@ -417,7 +417,7 @@ def dev_environments_test(api):
         task_type,
         work_type,
         task.id)
-    if evm_type == "Sepolia" and extra_funding:
+    if evm_type == "Sepolia":
         create_subtask(
             api,
             "Drain remaining funds",
@@ -425,17 +425,37 @@ def dev_environments_test(api):
             task_type,
             work_type,
             task.id)
+    create_subtask(
+        api,
+        "Destroy environment",
+        ENVIRONMENTS_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+
 
 def dev_environments_upscale_test(api):
     work_type = WorkType.WORK
     task_type = TaskType.DEV
 
-    environment_name = questionary.text("Name of the environment?").ask()
+    env_name = questionary.text("Name of the environment?").ask()
+    purpose = questionary.text("Purpose of the test?").ask()
+    evm_type = questionary.select(
+        "What is the EVM type?",
+        choices=["Anvil", "Sepolia"]
+    ).ask()
+    extra_funding = False
+    if evm_type == "Sepolia":
+        extra_funding = questionary.confirm("Is extra funding required?").ask()
+    env_type = questionary.select(
+        "What type/size of environments are required?",
+        choices=["Custom", "Development", "Staging"]
+    ).ask()
+
     binary_option = questionary.select(
         "Binary option",
         choices=["PR", "Branch", "RC", "Stable"]
     ).ask()
-
     binary_option_text = ""
     if binary_option == "PR":
         pr_number = questionary.text("PR#?").ask()
@@ -450,89 +470,55 @@ def dev_environments_upscale_test(api):
         stable_version = questionary.text("Stable version?").ask()
         binary_option_text = f"[[{stable_version}]({AUTONOMI_STABLE_RELEASE_URL}-{stable_version})]"
 
-    initial_node_count = questionary.text(
-        "Initial node VM count?",
-        validate=lambda text: text.isdigit()
-    ).ask()
-    initial_node_count = int(initial_node_count)
-
-    increment_size = questionary.text(
-        "Increment size?",
-        validate=lambda text: text.isdigit()
-    ).ask()
-    increment_size = int(increment_size)
-
-    increment_count = questionary.text(
-        "How many increments?",
-        validate=lambda text: text.isdigit()
-    ).ask()
-    increment_count = int(increment_count)
-
     task = create_task(
         api,
-        f"Upscale Test Run: `{environment_name}` {binary_option_text}",
+        f"Upscaling Test -- `{env_name}` {binary_option_text} [{env_type} Config]",
         ENVIRONMENTS_PROJECT_ID,
         task_type,
         work_type,
-        apply_date=True)
-    create_subtask(
-        api,
-        f"Define inputs for launch network workflow",
-        ENVIRONMENTS_PROJECT_ID,
-        task_type,
-        work_type,
-        task.id)
-
-    start = initial_node_count
-    for _ in range(0, increment_count):
-        end = start + increment_size
+        apply_date=True,
+        description=purpose)
+    for task_title in [
+        "Define inputs for launch network workflow",
+        "Define inputs for upscaling workflows",
+        "Define scripts for running upscale workflows",
+        "Deploy environment",
+        "Smoke test environment",
+    ]:
         create_subtask(
             api,
-            f"Define specification for upscaling workflow for {start} to {end}",
+            task_title,
             ENVIRONMENTS_PROJECT_ID,
             task_type,
             work_type,
             task.id)
-        start = end
+    if evm_type == "Sepolia" and extra_funding:
+        create_subtask(
+            api,
+            "Provide extra funding",
+            ENVIRONMENTS_PROJECT_ID,
+            task_type,
+            work_type,
+            task.id)
 
     create_subtask(
         api,
-        f"Deploy `{environment_name}`",
+        "Gather results",
         ENVIRONMENTS_PROJECT_ID,
         task_type,
         work_type,
         task.id)
+    if evm_type == "Sepolia":
+        create_subtask(
+            api,
+            "Drain remaining funds",
+            ENVIRONMENTS_PROJECT_ID,
+            task_type,
+            work_type,
+            task.id)
     create_subtask(
         api,
-        f"Smoke test `{environment_name}`",
-        ENVIRONMENTS_PROJECT_ID,
-        task_type,
-        work_type,
-        task.id)
-    create_subtask(
-        api,
-        f"Provide additional funding for `{environment_name}` (if applicable)",
-        ENVIRONMENTS_PROJECT_ID,
-        task_type,
-        work_type,
-        task.id)
-    create_subtask(
-        api,
-        f"Define script for running the unattended upscale",
-        ENVIRONMENTS_PROJECT_ID,
-        task_type,
-        work_type,
-        task.id)
-    create_subtask(
-        api,
-        f"Drain funds for `{environment_name}`",
-        ENVIRONMENTS_PROJECT_ID,
-        task_type,
-        work_type,
-        task.id)
-    create_subtask(
-        api,
-        f"Destroy `{environment_name}`",
+        "Destroy environment",
         ENVIRONMENTS_PROJECT_ID,
         task_type,
         work_type,
