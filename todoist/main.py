@@ -59,6 +59,9 @@ def get_args():
         "aw-release-checklist",
         help="Create a task for an Archive Witness release checklist")
     releases_subparsers.add_parser(
+        "rc-from-hotfix-branch",
+        help="Create a release candidate with an existing hotfix branch")
+    releases_subparsers.add_parser(
         "hotfix-existing-branches",
         help="Create tasks for performing a hotfix for branches that already exist as PRs")
 
@@ -179,6 +182,8 @@ def main():
                 dev_releases_aw_release_checklist(api)
             elif args.releases_command == "hotfix-existing-branches":
                 dev_releases_hotfix_existing_branches(api)
+            elif args.releases_command == "rc-from-hotfix-branch":
+                dev_releases_rc_from_hotfix_branch(api)
         elif args.dev_command == "tests":
             if args.tests_command == "nodeman-linux-smoke-test":
                 dev_tests_nodeman_linux_smoke_test(api)
