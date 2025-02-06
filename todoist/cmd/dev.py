@@ -850,6 +850,128 @@ def dev_releases_rc_from_hotfix_branch(api):
         section_id=CURRENT_RELEASE_CYCLE_SECTION_ID)
 
 
+def dev_releases_rc_new(api):
+    work_type = WorkType.WORK
+    task_type = TaskType.DEV
+
+    version = questionary.text("New package version?").ask()
+    stripped_version = ".".join(version.split(".")[:-1])
+    branch_name = f"rc-{stripped_version}"
+
+    create_task(
+        api,
+        f"`{version}` RC: merge all relevant PRs",
+        CI_RELEASE_PROJECT_ID,
+        task_type,
+        work_type,
+        section_id=CURRENT_RELEASE_CYCLE_SECTION_ID)
+
+    task = create_task(
+        api,
+        f"`{version}` RC: create Discourse thread",
+        CI_RELEASE_PROJECT_ID,
+        task_type,
+        work_type,
+        section_id=CURRENT_RELEASE_CYCLE_SECTION_ID)
+    for subtask_title in [
+        "Generate the report with the obtained PR numbers",
+    ]:
+        create_subtask(
+            api,
+            subtask_title,
+            CI_RELEASE_PROJECT_ID,
+            task_type,
+            work_type,
+            task.id)
+
+    task = create_task(
+        api,
+        f"`{version}` RC: produce release candidate",
+        CI_RELEASE_PROJECT_ID,
+        task_type,
+        work_type,
+        section_id=CURRENT_RELEASE_CYCLE_SECTION_ID)
+    rc_tasks = [
+        f"On `{branch_name}`: use `bump_version_for_rc.sh` script to get rc-based versions",
+        f"On `{branch_name}`: increment `release-cycle-counter` in the `release-cycle-info` file",
+        f"On `{branch_name}`: increment `RELEASE_CYCLE_COUNTER` in the `release_info.rs` file",
+        f"On `{branch_name}`: create a `chore(release): release candidate {version}` commit",
+        f"On `{branch_name}`: push the release commit",
+        f"Obtain the PR numbers using `git log stable..{branch_name} --oneline`",
+        f"Run the `release` workflow with 4mb chunk size using {branch_name}",
+        f"Update the Github release with the description"
+    ]
+    for rc_task in rc_tasks:
+        create_subtask(
+            api,
+            rc_task,
+            CI_RELEASE_PROJECT_ID,
+            task_type,
+            work_type,
+            task.id)
+
+    stable_release_tasks = [
+        f"On `{branch_name}`: finalise the changelog",
+        f"On `{branch_name}`: use `cargo release version release --execute` to bump from rc to stable versions",
+        f"On `{branch_name}`: create a `chore(release): stable release {version}` commit",
+        f"Use `git merge --no-ff {branch_name}` to merge the RC branch to `main`",
+        "Push to `main`",
+        f"Use `git merge --no-ff {branch_name}` to merge the RC branch to `stable`",
+        "Push to `stable`",
+        "Publish `sn_logging` manually",
+        "Tag `sn_logging` manually",
+        "Push tag to origin",
+        "Prepare the release description",
+        "Run the `release` workflow on the `stable` branch with a 4MB chunk size",
+        "Update the Github release description",
+        "On `stable`: publish crates with `release-plz`",
+    ]
+    task = create_task(
+        api,
+        f"`{version}`: stable release",
+        CI_RELEASE_PROJECT_ID,
+        task_type,
+        work_type,
+        section_id=CURRENT_RELEASE_CYCLE_SECTION_ID)
+    for stable_task in stable_release_tasks:
+        create_subtask(
+            api,
+            stable_task,
+            CI_RELEASE_PROJECT_ID,
+            task_type,
+            work_type,
+            task.id)
+
+    task = create_task(
+        api,
+        f"`{version}`: create Discourse thread for stable release",
+        CI_RELEASE_PROJECT_ID,
+        task_type,
+        work_type,
+        section_id=CURRENT_RELEASE_CYCLE_SECTION_ID)
+    create_subtask(
+        api,
+        "Post reply with release notes",
+        CI_RELEASE_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_subtask(
+        api,
+        "Define deployment plan",
+        CI_RELEASE_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    create_task(
+        api,
+        f"`{version}`: request community announcement",
+        CI_RELEASE_PROJECT_ID,
+        task_type,
+        work_type,
+        section_id=CURRENT_RELEASE_CYCLE_SECTION_ID)
+
+
 def dev_tests_nodeman_linux_smoke_test(api):
     work_type = WorkType.WORK
     task_type = TaskType.DEV
