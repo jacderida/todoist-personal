@@ -66,10 +66,10 @@ def get_args():
         help="Create tasks for a hotfix release candidate")
     releases_subparsers.add_parser(
         "rc-from-hotfix-branch",
-        help="Create a release candidate with an existing hotfix branch")
+        help="Create tasks for a release candidate with an existing hotfix branch")
     releases_subparsers.add_parser(
         "rc-new",
-        help="Create a release candidate from the main branch")
+        help="Create tasks for a release candidate from the main branch")
     releases_subparsers.add_parser(
         "rc-sneak",
         help="Create tasks for a new sneak release candidate")
@@ -191,12 +191,12 @@ def main():
                 dev_releases_aw_release_checklist(api)
             elif args.releases_command == "hotfix-existing-branches":
                 dev_releases_hotfix_existing_branches(api)
-            elif args.releases_command == "rc-new":
-                dev_releases_rc_new(api)
             elif args.releases_command == "rc-from-hotfix-branch":
                 dev_releases_rc_from_hotfix_branch(api)
             elif args.releases_command == "rc-hotfix":
                 dev_releases_rc_hotfix(api)
+            elif args.releases_command == "rc-new":
+                dev_releases_rc_new(api)
             elif args.releases_command == "rc-sneak":
                 dev_releases_rc_sneak(api)
         elif args.dev_command == "tests":

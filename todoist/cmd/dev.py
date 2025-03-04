@@ -249,7 +249,7 @@ def dev_environments_comparison(api):
 
         test_type = questionary.select(
             "Type",
-            choices=["PR", "Branch", "RC"]
+            choices=["PR", "Branch", "RC", "Release"]
         ).ask()
         task_title += f"`TEST{i + 1}`: `{name}` "
         if test_type == "PR":
@@ -265,6 +265,9 @@ def dev_environments_comparison(api):
         elif test_type == "RC":
             rc_version = questionary.text("RC version?").ask()
             task_title += f"[[{rc_version} RC]({AUTONOMI_RC_RELEASE_URL}-{rc_version})]"
+        elif test_type == "Release":
+            release_version = questionary.text("Version?").ask()
+            task_title += f"[[{release_version}]({AUTONOMI_RC_RELEASE_URL}-{release_version})]"
         task_title += " vs "
 
     ref_env_name = questionary.text("Name of the REF environment?").ask()
