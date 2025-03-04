@@ -62,6 +62,9 @@ def get_args():
         "hotfix-existing-branches",
         help="Create tasks for performing a hotfix for branches that already exist as PRs")
     releases_subparsers.add_parser(
+        "rc-hotfix",
+        help="Create tasks for a hotfix release candidate")
+    releases_subparsers.add_parser(
         "rc-from-hotfix-branch",
         help="Create a release candidate with an existing hotfix branch")
     releases_subparsers.add_parser(
@@ -189,6 +192,8 @@ def main():
                 dev_releases_rc_new(api)
             elif args.releases_command == "rc-from-hotfix-branch":
                 dev_releases_rc_from_hotfix_branch(api)
+            elif args.releases_command == "rc-hotfix":
+                dev_releases_rc_hotfix(api)
         elif args.dev_command == "tests":
             if args.tests_command == "nodeman-linux-smoke-test":
                 dev_tests_nodeman_linux_smoke_test(api)
