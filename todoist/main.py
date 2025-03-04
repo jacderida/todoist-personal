@@ -70,6 +70,9 @@ def get_args():
     releases_subparsers.add_parser(
         "rc-new",
         help="Create a release candidate from the main branch")
+    releases_subparsers.add_parser(
+        "rc-sneak",
+        help="Create tasks for a new sneak release candidate")
 
     tests_parser = dev_subparsers.add_parser("tests", help="Create tasks for testing")
     tests_subparsers = tests_parser.add_subparsers(
@@ -194,6 +197,8 @@ def main():
                 dev_releases_rc_from_hotfix_branch(api)
             elif args.releases_command == "rc-hotfix":
                 dev_releases_rc_hotfix(api)
+            elif args.releases_command == "rc-sneak":
+                dev_releases_rc_sneak(api)
         elif args.dev_command == "tests":
             if args.tests_command == "nodeman-linux-smoke-test":
                 dev_tests_nodeman_linux_smoke_test(api)

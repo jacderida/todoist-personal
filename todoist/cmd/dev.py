@@ -1108,6 +1108,40 @@ def dev_releases_rc_new(api):
         work_type,
         section_id=CURRENT_RELEASE_CYCLE_SECTION_ID)
 
+def dev_releases_rc_sneak(api):
+    work_type = WorkType.WORK
+    task_type = TaskType.DEV
+
+    version = questionary.text("New package version?").ask()
+    task = create_task(
+        api,
+        f"Cut `{version}` sneak RC",
+        CI_RELEASE_PROJECT_ID,
+        task_type,
+        work_type,
+        section_id=CURRENT_RELEASE_CYCLE_SECTION_ID)
+
+    for subtask_title in [
+        "Merge all relevant PRs",
+        "Pull any new changes into the RC branch",
+        "Bump the version numbers: `cargo release version --workspace rc --execute`",
+        "Increment the counter in the `release-cycle-info` file",
+        "Increment the counter in the `sn_build_info/src/release_info.rs` file",
+        f"Create a new `chore(release): release candidate `{version}`",
+        "Run the release workflow on the RC branch with 4mb chunk size",
+        "Add the new PR numbers to my internal list",
+        "Produce the release description",
+        "Update the Discourse RC thread with the sneak details",
+        "Update the Github release description",
+    ]:
+        create_subtask(
+            api,
+            subtask_title,
+            CI_RELEASE_PROJECT_ID,
+            task_type,
+            work_type,
+            task.id)
+
 
 def dev_tests_nodeman_linux_smoke_test(api):
     work_type = WorkType.WORK
