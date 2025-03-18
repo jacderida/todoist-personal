@@ -1392,6 +1392,49 @@ def dev_tests_nodeman_windows_smoke_test(api):
         task_type,
         work_type,
         task.id)
+def dev_environments_test_upload_report():
+    start_time = questionary.text("Start time of the upload period:").ask()
+    end_time = questionary.text("End time of the upload period:").ask()
+
+    env_name = questionary.text("Environment name:").ask()
+    total_uploaders = questionary.text(
+        "Total number of uploaders:",
+        validate=lambda text: text.isdigit()
+    ).ask()
+    successful_uploads = questionary.text(
+        "Number of successful uploads:",
+        validate=lambda text: text.isdigit()
+    ).ask()
+    total_chunks = questionary.text(
+        "Total chunks uploaded:",
+        validate=lambda text: text.isdigit()
+    ).ask()
+    avg_upload_time = questionary.text(
+        "Average upload time (seconds):",
+        validate=lambda text: text.replace('.', '').isdigit()
+    ).ask()
+    chunk_proof_error_count = questionary.text(
+        "Number of chunk proof errors:",
+        validate=lambda text: text.replace('.', '').isdigit()
+    ).ask()
+    not_enough_quotes_error_count = questionary.text(
+        "Number of not enough quotes errors:",
+        validate=lambda text: text.replace('.', '').isdigit()
+    ).ask()
+
+    print()
+    print("=======")
+    print("Uploads")
+    print("=======")
+    print(f"Period: {start_time} to {end_time}")
+    print(f"{env_name}:")
+    print(f"- Total uploaders: {total_uploaders}")
+    print(f"- Successful uploads: {successful_uploads}")
+    print(f"- Total chunks uploaded: {total_chunks}")
+    print(f"- Average upload time: {avg_upload_time}s")
+    print(f"- Chunk proof errors: {chunk_proof_error_count}")
+    print(f"- Not enough quotes errors: {not_enough_quotes_error_count}")
+
 #
 # Helpers
 #

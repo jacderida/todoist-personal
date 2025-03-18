@@ -46,6 +46,9 @@ def get_args():
         "test",
         help="Create a task for deploying an environment for a test")
     environments_subparsers.add_parser(
+        "test-upload-report",
+        help="Generate a report for upload metrics for a test environment")
+    environments_subparsers.add_parser(
         "upscale-test",
         help="Create a task for deploying an environment for an upscale test")
 
@@ -182,8 +185,10 @@ def main():
         elif args.dev_command == "environments":
             if args.environments_command == "comparison":
                 dev_environments_comparison(api)
-            if args.environments_command == "test":
+            elif args.environments_command == "test":
                 dev_environments_test(api)
+            elif args.environments_command == "test-upload-report":
+                dev_environments_test_upload_report()
             if args.environments_command == "upscale-test":
                 dev_environments_upscale_test(api)
         elif args.dev_command == "releases":
