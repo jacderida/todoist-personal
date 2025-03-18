@@ -1127,7 +1127,8 @@ def dev_releases_rc_sneak(api):
     for subtask_title in [
         "Merge all relevant PRs",
         "Pull any new changes into the RC branch",
-        "Bump the version numbers: `cargo release version --workspace rc --execute`",
+        "Increment RC suffix: `cargo release version --workspace rc --execute`",
+        "Consider if any versions need to be bumped manually",
         "Increment the counter in the `release-cycle-info` file",
         "Increment the counter in the `sn_build_info/src/release_info.rs` file",
         f"Create a new `chore(release): release candidate `{version}`",
