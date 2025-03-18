@@ -1392,6 +1392,97 @@ def dev_tests_nodeman_windows_smoke_test(api):
         task_type,
         work_type,
         task.id)
+
+def dev_environments_comparison_upload_report():
+    start_time = questionary.text("Start time of the upload period:").ask()
+    end_time = questionary.text("End time of the upload period:").ask()
+
+    print("\nReference Environment:")
+    ref_env_name = questionary.text("Environment name:").ask()
+    ref_total_uploaders = questionary.text(
+        "Total number of uploaders:",
+        validate=lambda text: text.isdigit()
+    ).ask()
+    ref_successful_uploads = questionary.text(
+        "Number of successful uploads:",
+        validate=lambda text: text.isdigit()
+    ).ask()
+    ref_total_chunks = questionary.text(
+        "Total chunks uploaded:",
+        validate=lambda text: text.isdigit()
+    ).ask()
+    ref_avg_upload_time = questionary.text(
+        "Average upload time (seconds):",
+        validate=lambda text: text.replace('.', '').isdigit()
+    ).ask()
+    ref_chunk_proof_error_count = questionary.text(
+        "Number of chunk proof errors:",
+        validate=lambda text: text.replace('.', '').isdigit()
+    ).ask()
+    ref_not_enough_quotes_error_count = questionary.text(
+        "Number of not enough quotes errors:",
+        validate=lambda text: text.replace('.', '').isdigit()
+    ).ask()
+
+    test_count = questionary.text(
+        "\nNumber of test environments:",
+        validate=lambda text: text.isdigit()
+    ).ask()
+    test_count = int(test_count)
+
+    test_envs = []
+    for i in range(test_count):
+        print(f"\nTest Environment {i + 1}:")
+        env_name = questionary.text("Environment name:").ask()
+        env_data = {
+            'name': env_name,
+            'total_uploaders': questionary.text(
+                "Total number of uploaders:",
+                validate=lambda text: text.isdigit()
+            ).ask(),
+            'successful_uploads': questionary.text(
+                "Number of successful uploads:",
+                validate=lambda text: text.isdigit()
+            ).ask(),
+            'total_chunks': questionary.text(
+                "Total chunks uploaded:",
+                validate=lambda text: text.isdigit()
+            ).ask(),
+            'avg_upload_time': questionary.text(
+                "Average upload time (seconds):",
+                validate=lambda text: text.replace('.', '').isdigit()
+            ).ask(),
+            'chunk_proof_error_count': questionary.text(
+                "Number of chunk proof errors:",
+                validate=lambda text: text.replace('.', '').isdigit()
+            ).ask(),
+            'not_enough_quotes_error_count': questionary.text(
+                "Number of not enough quotes errors:",
+                validate=lambda text: text.replace('.', '').isdigit()
+            ).ask()
+        }
+        test_envs.append(env_data)
+
+    print()
+    print("Uploads")
+    print("=======")
+    print(f"Period: {start_time} to {end_time}")
+    for i, env in enumerate(test_envs):
+        print(f"{env['name']}:")
+        print(f"- Total uploaders: {env['total_uploaders']}")
+        print(f"- Successful uploads: {env['successful_uploads']}")
+        print(f"- Total chunks uploaded: {env['total_chunks']}")
+        print(f"- Average upload time: {env['avg_upload_time']}s")
+
+    print(f"{ref_env_name}:")
+    print(f"- Total uploaders: {ref_total_uploaders}")
+    print(f"- Successful uploads: {ref_successful_uploads}")
+    print(f"- Total chunks uploaded: {ref_total_chunks}")
+    print(f"- Average upload time: {ref_avg_upload_time}s")
+    print(f"- Chunk proof errors: {ref_chunk_proof_error_count}")
+    print(f"- Not enough quotes errors: {ref_not_enough_quotes_error_count}")
+
+
 def dev_environments_test_upload_report():
     start_time = questionary.text("Start time of the upload period:").ask()
     end_time = questionary.text("End time of the upload period:").ask()
