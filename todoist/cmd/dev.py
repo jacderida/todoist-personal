@@ -544,6 +544,81 @@ def dev_environments_client_performance_comparison(api):
 
 
 def dev_environments_client_performance_test(api):
+    work_type = WorkType.WORK
+    task_type = TaskType.DEV
+    
+    env_name = questionary.text("Name of the environment?").ask()
+    purpose = questionary.text("Purpose of the test?").ask()
+    test_type = questionary.select(
+        "Type of test?",
+        choices=["Download", "Upload", "Download/Upload"]
+    ).ask()
+    evm_type = questionary.select(
+        "What is the EVM type?",
+        choices=["Anvil", "Sepolia", "Arbitrum One"]
+    ).ask()
+    binary_option = questionary.select(
+        "Binary option",
+        choices=["PR", "Branch", "RC", "Stable"]
+    ).ask()
+    binary_option_text = ""
+    if binary_option == "PR":
+        pr_number = questionary.text("PR#?").ask()
+        binary_option_text = f"[[#{pr_number}]({AUTONOMI_PR_URL}/{pr_number})]"
+    elif binary_option == "Branch":
+        branch_ref = questionary.text("Branch ref?").ask()
+        binary_option_text = f"[`{branch_ref}`]"
+    elif binary_option == "RC":
+        rc_version = questionary.text("RC version?").ask()
+        binary_option_text = f"[[{rc_version}]({AUTONOMI_RC_RELEASE_URL}-{rc_version})]"
+    elif binary_option == "Stable":
+        stable_version = questionary.text("Stable version?").ask()
+        binary_option_text = f"[[{stable_version}]({AUTONOMI_STABLE_RELEASE_URL}-{stable_version})]"
+
+    task = create_task(
+        api,
+        f"Performance test: `{env_name}` {binary_option_text} [{test_type}]",
+        ENVIRONMENTS_PROJECT_ID,
+        task_type,
+        work_type,
+        apply_date=True,
+        description=purpose)
+    for task_title in [
+        "Define inputs for client deploy workflow",
+        f"Deploy environment",
+        f"Smoke test environment",
+    ]:
+        create_subtask(
+            api,
+            task_title,
+            ENVIRONMENTS_PROJECT_ID,
+            task_type,
+            work_type,
+            task.id)
+    create_subtask(
+        api,
+        "Gather results",
+        ENVIRONMENTS_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+    if evm_type == "Sepolia":
+        create_subtask(
+            api,
+            "Drain remaining funds",
+            ENVIRONMENTS_PROJECT_ID,
+            task_type,
+            work_type,
+            task.id)
+    create_subtask(
+        api,
+        "Destroy environment",
+        ENVIRONMENTS_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+
+
 def dev_environments_test(api):
     work_type = WorkType.WORK
     task_type = TaskType.DEV

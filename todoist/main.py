@@ -46,6 +46,9 @@ def get_args():
         "client-performance-comparison",
         help="Create a task for comparing two client deployments")
     environments_subparsers.add_parser(
+        "client-performance-test",
+        help="Create a task for deploying an environment for a performance test")
+    environments_subparsers.add_parser(
         "comparison",
         help="Create a task for comparing two environments")
     environments_subparsers.add_parser(
@@ -196,6 +199,8 @@ def main():
                 dev_environments_bootstrap(api)
             elif args.environments_command == "client-performance-comparison":
                 dev_environments_client_performance_comparison(api)
+            elif args.environments_command == "client-performance-test":
+                dev_environments_client_performance_test(api)
             elif args.environments_command == "comparison":
                 dev_environments_comparison(api)
             elif args.environments_command == "comparison-upload-report":
