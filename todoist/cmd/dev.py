@@ -414,6 +414,136 @@ def dev_environments_comparison(api):
             task.id)
 
 
+def dev_environments_client_performance_comparison(api):
+    work_type = WorkType.WORK
+    task_type = TaskType.DEV
+
+    purpose = questionary.text("Purpose of the test?").ask()
+    evm_type = questionary.select(
+        "What is the EVM type?",
+        choices=["Anvil", "Sepolia", "ArbitrumOne"]
+    ).ask()
+    test_type = questionary.select(
+        "Is it a download or upload test?",
+        choices=["Download", "Upload", "Download/Upload"]
+    ).ask()
+
+    test_count = questionary.text(
+        "Number of test environments?",
+        validate=lambda text: text.isdigit()
+    ).ask()
+    test_count = int(test_count)
+
+    environments = []
+    task_title = "Client Performance Comparison -- "
+    for i in range(0, test_count):
+        print(f"TEST{i + 1} environment")
+        name = questionary.text(f"Name?").ask()
+        environments.append(name)
+
+        test_bin_type = questionary.select(
+            "Type",
+            choices=["PR", "Branch", "RC", "Release"]
+        ).ask()
+        task_title += f"`TEST{i + 1}`: `{name}` "
+        if test_bin_type == "PR":
+            pr_number = questionary.text(
+                "PR#?",
+                validate=lambda text: text.isdigit()
+            ).ask()
+            pr_number = int(pr_number)
+            task_title += f"[[#{pr_number}]({AUTONOMI_PR_URL}/{pr_number})]"
+        elif test_bin_type == "Branch":
+            branch_ref = questionary.text("Branch ref?").ask()
+            task_title += f"[`{branch_ref}`]"
+        elif test_bin_type == "RC":
+            rc_version = questionary.text("RC version?").ask()
+            task_title += f"[[{rc_version} RC]({AUTONOMI_RC_RELEASE_URL}-{rc_version})]"
+        elif test_bin_type == "Release":
+            release_version = questionary.text("Version?").ask()
+            task_title += f"[[{release_version}]({AUTONOMI_RC_RELEASE_URL}-{release_version})]"
+        task_title += " vs "
+
+    ref_env_name = questionary.text("Name of the REF environment?").ask()
+    environments.append(ref_env_name)
+    release_version = questionary.text("Release version?").ask()
+    task_title += f" `REF`: `{ref_env_name}` "
+    task_title += f"[[{release_version}]({AUTONOMI_STABLE_RELEASE_URL}-{release_version})]"
+    task_title += f" [{test_type}]"
+    task = create_task(
+        api,
+        task_title,
+        ENVIRONMENTS_PROJECT_ID,
+        task_type,
+        work_type,
+        description=purpose,
+        apply_date=True)
+
+    for env in environments:
+        create_subtask(
+            api,
+            f"Define specification for `{env}`",
+            ENVIRONMENTS_PROJECT_ID,
+            task_type,
+            work_type,
+            task.id)
+
+    for env in environments:
+        for title in [
+            f"Deploy `{env}`",
+            f"Smoke test `{env}`",
+        ]:
+            create_subtask(
+                api,
+                title,
+                ENVIRONMENTS_PROJECT_ID,
+                task_type,
+                work_type,
+                task.id)
+    if evm_type == "Sepolia":
+        for env in environments:
+            create_subtask(
+                api,
+                f"Provide additional funding for `{env}`",
+                ENVIRONMENTS_PROJECT_ID,
+                task_type,
+                work_type,
+                task.id)
+
+    for title in [
+        "Restart the uploaders",
+        "Create comparison in the runner database",
+        "Post comparison in Slack",
+        "Post results in Slack thread",
+        "Record results in runner database",
+    ]:
+        create_subtask(
+            api,
+            title,
+            ENVIRONMENTS_PROJECT_ID,
+            task_type,
+            work_type,
+            task.id)
+    if evm_type == "Sepolia":
+        for env in environments:
+            create_subtask(
+                api,
+                f"Drain funds from `{env}`",
+                ENVIRONMENTS_PROJECT_ID,
+                task_type,
+                work_type,
+                task.id)
+    for env in environments:
+        create_subtask(
+            api,
+            f"Destroy `{env}`",
+            ENVIRONMENTS_PROJECT_ID,
+            task_type,
+            work_type,
+            task.id)
+
+
+def dev_environments_client_performance_test(api):
 def dev_environments_test(api):
     work_type = WorkType.WORK
     task_type = TaskType.DEV
