@@ -209,7 +209,7 @@ def main():
                 dev_environments_test(api)
             elif args.environments_command == "test-upload-report":
                 dev_environments_test_upload_report()
-            if args.environments_command == "upscale-test":
+            elif args.environments_command == "upscale-test":
                 dev_environments_upscale_test(api)
         elif args.dev_command == "releases":
             if args.releases_command == "aw-release-checklist":

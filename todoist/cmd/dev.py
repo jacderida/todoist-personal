@@ -23,6 +23,10 @@ PROD_ENV_NAME = "PROD-01"
 
 
 def dev_deployments_generate_markdown_post():
+    environment = questionary.select(
+        "Which environment?",
+        choices=["alpha", "mainnet"]
+    ).ask()
     package_version = questionary.text("Package version:").ask()
     antnode_version = questionary.text("antnode version:").ask()
     ant_version = questionary.text("ant version:").ask()
@@ -66,7 +70,12 @@ def dev_deployments_generate_markdown_post():
         post_content += f"[ ] Run `upgrade-network` against private hosts\n"
 
         current_host = 1
-        end_host = 39
+        if environment == "mainnet":
+            end_host = 39
+        elif environment == "alpha":
+            end_host = 100
+        else:
+            raise ValueError()
         increment_size = 9
 
         while current_host < end_host:
@@ -93,6 +102,10 @@ def dev_deployments_upgrade(api):
     work_type = WorkType.PERSONAL
     task_type = TaskType.DEV
 
+    environment = questionary.select(
+        "Which environment?",
+        choices=["alpha", "mainnet"]
+    ).ask()
     package_version = questionary.text("Package version?").ask()
     stripped_version = ".".join(package_version.split(".")[:-1])
     ant_version = questionary.text("`ant` version?").ask()
@@ -168,7 +181,12 @@ def dev_deployments_upgrade(api):
 
     file_number += 1
     current_host = 1
-    end_host = 39
+    if environment == "mainnet":
+        end_host = 39
+    elif environment == "alpha":
+        end_host = 100
+    else:
+        raise ValueError()
     increment_size = 9
 
     initial_generic_content = (
@@ -711,7 +729,7 @@ def dev_environments_upscale_test(api):
     work_type = WorkType.WORK
     task_type = TaskType.DEV
 
-    env_name = questionary.text("Name of the environment?").ask()
+    env_name = questionary.text("Environment name?").ask()
     purpose = questionary.text("Purpose of the test?").ask()
     evm_type = questionary.select(
         "What is the EVM type?",
