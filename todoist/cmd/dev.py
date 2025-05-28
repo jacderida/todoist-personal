@@ -220,6 +220,67 @@ def dev_deployments_upgrade(api):
         apply_date=True)
 
 
+def dev_environments_bootstrap(api):
+    work_type = WorkType.WORK
+    task_type = TaskType.DEV
+
+    new_env_name = questionary.text("Environment name?").ask()
+    source_env_name = questionary.text("Source environment name?").ask()
+    purpose = questionary.text("Purpose of the bootstrap?").ask()
+    env_type = questionary.select(
+        "What type/size of environment is required?",
+        choices=["Development", "Staging"]
+    ).ask()
+
+    binary_option = questionary.select(
+        "Binary option",
+        choices=["PR", "Branch", "RC", "Stable"]
+    ).ask()
+    binary_option_text = ""
+    if binary_option == "PR":
+        pr_number = questionary.text("PR#?").ask()
+        binary_option_text = f"[[#{pr_number}]({AUTONOMI_PR_URL}/{pr_number})]"
+    elif binary_option == "Branch":
+        branch_ref = questionary.text("Branch ref?").ask()
+        binary_option_text = f"[`{branch_ref}`]"
+    elif binary_option == "RC":
+        rc_version = questionary.text("RC version?").ask()
+        binary_option_text = f"[[{rc_version}]({AUTONOMI_RC_RELEASE_URL}-{rc_version})]"
+    elif binary_option == "Stable":
+        stable_version = questionary.text("Stable version?").ask()
+        binary_option_text = f"[[{stable_version}]({AUTONOMI_STABLE_RELEASE_URL}-{stable_version})]"
+
+    task = create_task(
+        api,
+        f"Bootstrap environment: `{new_env_name}` {binary_option_text} [{env_type} Config]",
+        ENVIRONMENTS_PROJECT_ID,
+        task_type,
+        work_type,
+        apply_date=True,
+        description=f"Bootstrapped from `{source_env_name}`. {purpose}")
+    
+    for task_title in [
+        "Define inputs for bootstrap network workflow",
+        "Bootstrap environment",
+        "Smoke test environment",
+    ]:
+        create_subtask(
+            api,
+            task_title,
+            ENVIRONMENTS_PROJECT_ID,
+            task_type,
+            work_type,
+            task.id)
+
+    create_subtask(
+        api,
+        "Destroy environment",
+        ENVIRONMENTS_PROJECT_ID,
+        task_type,
+        work_type,
+        task.id)
+
+
 def dev_environments_comparison(api):
     work_type = WorkType.WORK
     task_type = TaskType.DEV

@@ -40,6 +40,9 @@ def get_args():
         help="Create tasks related to environments",
         required=True)
     environments_subparsers.add_parser(
+        "bootstrap",
+        help="Create a task for bootstrapping a new environment from an existing one")
+    environments_subparsers.add_parser(
         "comparison",
         help="Create a task for comparing two environments")
     environments_subparsers.add_parser(
@@ -186,7 +189,9 @@ def main():
             elif args.deployments_command == "upgrade":
                 dev_deployments_upgrade(api)
         elif args.dev_command == "environments":
-            if args.environments_command == "comparison":
+            if args.environments_command == "bootstrap":
+                dev_environments_bootstrap(api)
+            elif args.environments_command == "comparison":
                 dev_environments_comparison(api)
             elif args.environments_command == "comparison-upload-report":
                 dev_environments_comparison_upload_report()
