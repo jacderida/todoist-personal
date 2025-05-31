@@ -385,19 +385,11 @@ def dev_environments_comparison(api):
                 task_type,
                 work_type,
                 task.id)
-    if evm_type == "Sepolia":
-        for env in environments:
-            create_subtask(
-                api,
-                f"Provide additional funding for `{env}`",
-                ENVIRONMENTS_PROJECT_ID,
-                task_type,
-                work_type,
-                task.id)
 
     for title in [
-        "Restart the uploaders",
+        "Restart clients",
         "Create comparison in the runner database",
+        "Create issue in Linear",
         "Post comparison in Slack",
         "Use testnet comparator dash to compare the environments",
         "Use the uploader dash to compare the environments",
@@ -529,7 +521,7 @@ def dev_environments_client_performance_comparison(api):
                 task.id)
 
     for title in [
-        "Restart the uploaders",
+        "Restart clients",
         "Create comparison in the runner database",
         "Post comparison in Slack",
         "Post results in Slack thread",
