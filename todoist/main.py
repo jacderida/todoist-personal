@@ -55,6 +55,9 @@ def get_args():
         "comparison-upload-report",
         help="Generate a report comparing upload metrics between environments")
     environments_subparsers.add_parser(
+        "maintenance",
+        help="Create a task for deploying an environment for maintenance work")
+    environments_subparsers.add_parser(
         "test",
         help="Create a task for deploying an environment for a test")
     environments_subparsers.add_parser(
@@ -205,6 +208,8 @@ def main():
                 dev_environments_comparison(api)
             elif args.environments_command == "comparison-upload-report":
                 dev_environments_comparison_upload_report()
+            elif args.environments_command == "maintenance":
+                dev_environments_maintenance(api)
             elif args.environments_command == "test":
                 dev_environments_test(api)
             elif args.environments_command == "test-upload-report":
