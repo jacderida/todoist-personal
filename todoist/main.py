@@ -5,6 +5,7 @@ import sys
 from .cmd.dev import *
 from .cmd.food import *
 from .cmd.films import *
+from .cmd.finance import *
 from .cmd.sept11 import *
 
 from todoist_api_python.api import TodoistAPI
@@ -106,6 +107,12 @@ def get_args():
     films_subparsers = films_parser.add_subparsers(
         dest="films_command", help="Create tasks for films", required=True)
     films_subparsers.add_parser("schedule", help="Create a task to schedule watching a film")
+
+    finance_parser = main_subparser.add_parser("finance", help="Create tasks related to finance")
+    finance_subparsers = finance_parser.add_subparsers(
+        dest="finance_command", help="Create tasks related to finance", required=True)
+    finance_subparsers.add_parser("banking", help="Create the monthly banking admin task")
+    finance_subparsers.add_parser("crypto", help="Create the monthly crypto admin task")
 
     food_parser = main_subparser.add_parser("food", help="Create tasks for food management")
     food_subparsers = food_parser.add_subparsers(
@@ -237,6 +244,11 @@ def main():
     elif args.command == "films":
         if args.films_command == "schedule":
             films_schedule(api)
+    elif args.command == "finance":
+        if args.finance_command == "banking":
+            banking(api)
+        if args.finance_command == "crypto":
+            crypto(api)
     elif args.command == "food":
         if args.food_command == "get-calories":
             get_calories(api)
