@@ -59,6 +59,9 @@ def get_args():
         "maintenance",
         help="Create a task for deploying an environment for maintenance work")
     environments_subparsers.add_parser(
+        "prod-bootstrap-comparison",
+        help="Create a task for a comparison of two networks bootstrapped from mainnet")
+    environments_subparsers.add_parser(
         "test",
         help="Create a task for deploying an environment for a test")
     environments_subparsers.add_parser(
@@ -217,6 +220,8 @@ def main():
                 dev_environments_comparison_upload_report()
             elif args.environments_command == "maintenance":
                 dev_environments_maintenance(api)
+            elif args.environments_command == "prod-bootstrap-comparison":
+                dev_environments_prod_bootstrap_comparison(api)
             elif args.environments_command == "test":
                 dev_environments_test(api)
             elif args.environments_command == "test-upload-report":
