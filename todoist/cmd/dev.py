@@ -625,7 +625,7 @@ def dev_environments_comparison(api):
     ).ask()
     env_type = questionary.select(
         "What type/size of environments are required?",
-        choices=["Development", "Staging"]
+        choices=["Custom", "Development", "Staging"]
     ).ask()
 
     test_count = questionary.text(
@@ -706,12 +706,13 @@ def dev_environments_comparison(api):
         "Create comparison in the runner database",
         "Create issue in Linear",
         "Post comparison in Slack",
-        "Use testnet comparator dash to compare the environments",
-        "Use the uploader dash to compare the environments",
-        "Produce report for generic nodes",
-        "Produce report for private nodes",
-        "Post results in Slack thread",
-        "Record results in runner database",
+        "Use testnet comparator dash to evaluate the environments",
+        "Use the uploader dash to evaluate uploads for the environments",
+        "Use the network dashboard script to generate the comparison HTML report",
+        "Record the comparison results in the database using the comparison checklist",
+        "Record the upload results",
+        "Record the download results",
+        "Post the report in the Slack thread",
     ]:
         create_subtask(
             api,
