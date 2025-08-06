@@ -299,6 +299,163 @@ def dev_environments_bootstrap(api):
         task.id)
 
 
+def dev_environments_bootstrap_comparison(api):
+    work_type = WorkType.WORK
+    task_type = TaskType.DEV
+
+    purpose = questionary.text("Purpose of the test?").ask()
+    env_type = questionary.select(
+        "What type/size of environments are required?",
+        choices=["Custom", "Development", "Staging"]
+    ).ask()
+
+    if env_type == "Custom":
+        generic_hosts_count = questionary.text(
+            "Number of generic node hosts?",
+            validate=lambda text: text.isdigit(),
+            default="0"
+        ).ask()
+        generic_hosts_count = int(generic_hosts_count)
+        generic_nodes_per_host_count = questionary.text(
+            "Number of nodes on generic hosts?",
+            validate=lambda text: text.isdigit(),
+            default="0"
+        ).ask()
+        generic_nodes_per_host_count = int(generic_nodes_per_host_count)
+
+        symmetric_nat_hosts_count = questionary.text(
+            "Number of symmetric NAT hosts?",
+            validate=lambda text: text.isdigit(),
+            default="0"
+        ).ask()
+        symmetric_nat_hosts_count = int(symmetric_nat_hosts_count)
+        symmetric_nat_nodes_per_host_count = questionary.text(
+            "Number of nodes on symmetric NAT hosts?",
+            validate=lambda text: text.isdigit(),
+            default="0"
+        ).ask()
+        symmetric_nat_nodes_per_host_count = int(symmetric_nat_nodes_per_host_count)
+
+        full_cone_nat_hosts_count = questionary.text(
+            "Number of full cone NAT hosts?",
+            validate=lambda text: text.isdigit(),
+            default="0"
+        ).ask()
+        full_cone_nat_hosts_count = int(full_cone_nat_hosts_count)
+        full_cone_nat_nodes_per_host_count = questionary.text(
+            "Number of nodes on full cone NAT hosts?",
+            validate=lambda text: text.isdigit(),
+            default="0"
+        ).ask()
+        full_cone_nat_nodes_per_host_count = int(full_cone_nat_nodes_per_host_count)
+
+    test_count = questionary.text(
+        "Number of test environments?",
+        validate=lambda text: text.isdigit()
+    ).ask()
+    test_count = int(test_count)
+
+    environments = []
+    task_title = "Bootstrap Comparison -- "
+    for i in range(0, test_count):
+        print(f"TEST{i + 1} environment")
+        name = questionary.text(f"Name?").ask()
+        environments.append(name)
+
+        test_type = questionary.select(
+            "Type",
+            choices=["PR", "Branch", "RC", "Release"]
+        ).ask()
+        task_title += f"`TEST{i + 1}`: `{name}` "
+        if test_type == "PR":
+            pr_number = questionary.text(
+                "PR#?",
+                validate=lambda text: text.isdigit()
+            ).ask()
+            pr_number = int(pr_number)
+            task_title += f"[[#{pr_number}]({AUTONOMI_PR_URL}/{pr_number})]"
+        elif test_type == "Branch":
+            branch_ref = questionary.text("Branch ref?").ask()
+            task_title += f"[`{branch_ref}`]"
+        elif test_type == "RC":
+            rc_version = questionary.text("RC version?").ask()
+            task_title += f"[[{rc_version} RC]({AUTONOMI_RC_RELEASE_URL}-{rc_version})]"
+        elif test_type == "Release":
+            release_version = questionary.text("Version?").ask()
+            task_title += f"[[{release_version}]({AUTONOMI_RC_RELEASE_URL}-{release_version})]"
+        task_title += " vs "
+
+    ref_env_name = questionary.text("Name of the REF environment?").ask()
+    environments.append(ref_env_name)
+    release_version = questionary.text("Release version?").ask()
+    task_title += f" `REF`: `{ref_env_name}` "
+    task_title += f"[[{release_version}]({AUTONOMI_STABLE_RELEASE_URL}-{release_version})]"
+    task_title += f" [{env_type} Config]"
+    task = create_task(
+        api,
+        task_title,
+        ENVIRONMENTS_PROJECT_ID,
+        task_type,
+        work_type,
+        description=purpose,
+        apply_date=True)
+
+    for env in environments:
+        create_subtask(
+            api,
+            f"Define specification for `{env}`",
+            ENVIRONMENTS_PROJECT_ID,
+            task_type,
+            work_type,
+            task.id)
+
+    for env in environments:
+        for title in [
+            f"Bootstrap `{env}`",
+            f"Smoke test `{env}`",
+        ]:
+            create_subtask(
+                api,
+                title,
+                ENVIRONMENTS_PROJECT_ID,
+                task_type,
+                work_type,
+                task.id)
+
+    for title in [
+        "Create comparison in the runner database",
+        "Create issue in Linear",
+        "Post comparison in Slack",
+        "Produce comparison report",
+        "Post results in Slack thread",
+        "Record results in runner database",
+    ]:
+        create_subtask(
+            api,
+            title,
+            ENVIRONMENTS_PROJECT_ID,
+            task_type,
+            work_type,
+            task.id)
+    for env in environments:
+        create_subtask(
+            api,
+            f"Destroy `{env}`",
+            ENVIRONMENTS_PROJECT_ID,
+            task_type,
+            work_type,
+            task.id)
+
+    if env_type == "Custom":
+        print(f"generic-node-count: {generic_nodes_per_host_count}")
+        print(f"full-cone-private-node-count: {full_cone_nat_nodes_per_host_count}")
+        print(f"symmetric-private-node-count: {symmetric_nat_nodes_per_host_count}")
+
+        print(f"generic-vm-count: {generic_hosts_count}")
+        print(f"full-cone-private-vm-count: {full_cone_nat_hosts_count}")
+        print(f"symmetric-private-vm-count: {symmetric_nat_nodes_per_host_count}")
+
+
 def dev_environments_prod_bootstrap_comparison(api):
     work_type = WorkType.WORK
     task_type = TaskType.DEV

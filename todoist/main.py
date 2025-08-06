@@ -44,6 +44,9 @@ def get_args():
         "bootstrap",
         help="Create a task for bootstrapping a new environment from an existing one")
     environments_subparsers.add_parser(
+        "bootstrap-comparison",
+        help="Create a task for comparing two bootstrapped environments")
+    environments_subparsers.add_parser(
         "client-performance-comparison",
         help="Create a task for comparing two client deployments")
     environments_subparsers.add_parser(
@@ -210,6 +213,8 @@ def main():
         elif args.dev_command == "environments":
             if args.environments_command == "bootstrap":
                 dev_environments_bootstrap(api)
+            elif args.environments_command == "bootstrap-comparison":
+                dev_environments_bootstrap_comparison(api)
             elif args.environments_command == "client-performance-comparison":
                 dev_environments_client_performance_comparison(api)
             elif args.environments_command == "client-performance-test":
