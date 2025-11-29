@@ -1707,29 +1707,11 @@ def dev_releases_rc_new(api):
 
     create_task(
         api,
-        f"`{version}` RC: merge all relevant PRs",
+        f"`{version}` RC: merge any outstanding PRs",
         CI_RELEASE_PROJECT_ID,
         task_type,
         work_type,
         section_id=CURRENT_RELEASE_CYCLE_SECTION_ID)
-
-    task = create_task(
-        api,
-        f"`{version}` RC: create Discourse thread",
-        CI_RELEASE_PROJECT_ID,
-        task_type,
-        work_type,
-        section_id=CURRENT_RELEASE_CYCLE_SECTION_ID)
-    for subtask_title in [
-        "Generate the report with the obtained PR numbers",
-    ]:
-        create_subtask(
-            api,
-            subtask_title,
-            CI_RELEASE_PROJECT_ID,
-            task_type,
-            work_type,
-            task.id)
 
     task = create_task(
         api,
@@ -1739,14 +1721,24 @@ def dev_releases_rc_new(api):
         work_type,
         section_id=CURRENT_RELEASE_CYCLE_SECTION_ID)
     rc_tasks = [
-        f"On `{branch_name}`: use `bump_version_for_rc.sh` script to get rc-based versions",
-        f"On `{branch_name}`: increment `release-cycle-counter` in the `release-cycle-info` file",
-        f"On `{branch_name}`: increment `RELEASE_CYCLE_COUNTER` in the `release_info.rs` file",
-        f"On `{branch_name}`: create a `chore(release): release candidate {version}` commit",
-        f"On `{branch_name}`: push the release commit",
-        f"Obtain the PR numbers using `git log stable..{branch_name} --oneline`",
+        f"Create and switch to new `{branch_name}` branch",
+        "Use `git log stable..main --oneline --merges` to determine the PR numbers",
+        "Put the PR numbers in a file",
+        f"Use Claude to try and determine the crates to be bumped (check for breaking changes)",
+        f"Use Claude's recommendations to bump crates with `cargo release`",
+        f"Check `ant-protocol` does not have a `MAJOR` bump",
+        f"Bump the `autonomi-nodejs` Node JS package if the Rust crate was bumped",
+        f"Bump the `ant-node-nodejs` Node JS package if the Rust crate was bumped",
+        f"Increment `release-cycle-counter` in the `release-cycle-info` file",
+        f"Increment `RELEASE_CYCLE_COUNTER` in the `release_info.rs` file",
+        f"Use Claude to generate an initial changelog",
+        f"Review and improve the initial changelog",
+        f"Create a `chore(release): release candidate {version}` commit",
+        f"Push the release commit",
         f"Run the `release` workflow with 4mb chunk size using {branch_name}",
-        f"Update the Github release with the description"
+        f"Update the Github release with the description",
+        f"Create a Discourse thread for reviewing the changelog",
+        f"Create a new release candidate project in Linear"
     ]
     for rc_task in rc_tasks:
         create_subtask(
@@ -1760,15 +1752,16 @@ def dev_releases_rc_new(api):
     stable_release_tasks = [
         f"On `{branch_name}`: finalise the changelog",
         f"On `{branch_name}`: use `cargo release version release --execute` to bump from rc to stable versions",
+        f"On `{branch_name}`: bump `autonomi-nodejs` from RC to stable version (if applicable)",
+        f"On `{branch_name}`: bump `ant-node-nodejs` from RC to stable version (if applicable)",
         f"On `{branch_name}`: create a `chore(release): stable release {version}` commit",
         f"Use `git merge --no-ff {branch_name}` to merge the RC branch to `main`",
         "Push to `main`",
         f"Use `git merge --no-ff {branch_name}` to merge the RC branch to `stable`",
         "Push to `stable`",
-        "Publish `sn_logging` manually",
-        "Tag `sn_logging` manually",
         "Push tag to origin",
         "Prepare the release description",
+        "Publish crates using `release-plz` from development machine",
         "Run the `release` workflow on the `stable` branch with a 4MB chunk size",
         "Update the Github release description",
         "On `stable`: publish crates with `release-plz`",
@@ -1789,34 +1782,6 @@ def dev_releases_rc_new(api):
             work_type,
             task.id)
 
-    task = create_task(
-        api,
-        f"`{version}`: create Discourse thread for stable release",
-        CI_RELEASE_PROJECT_ID,
-        task_type,
-        work_type,
-        section_id=CURRENT_RELEASE_CYCLE_SECTION_ID)
-    create_subtask(
-        api,
-        "Post reply with release notes",
-        CI_RELEASE_PROJECT_ID,
-        task_type,
-        work_type,
-        task.id)
-    create_subtask(
-        api,
-        "Define deployment plan",
-        CI_RELEASE_PROJECT_ID,
-        task_type,
-        work_type,
-        task.id)
-    create_task(
-        api,
-        f"`{version}`: request community announcement",
-        CI_RELEASE_PROJECT_ID,
-        task_type,
-        work_type,
-        section_id=CURRENT_RELEASE_CYCLE_SECTION_ID)
 
 def dev_releases_rc_sneak(api):
     work_type = WorkType.WORK
@@ -1834,16 +1799,18 @@ def dev_releases_rc_sneak(api):
     for subtask_title in [
         "Merge all relevant PRs",
         "Pull any new changes into the RC branch",
-        "Increment RC suffix: `cargo release version --workspace rc --execute`",
+        "Add the new PR numbers to my internal list",
+        "Increment RC suffix for Rust crates: `cargo release version --workspace rc --execute`",
+        "Increment RC suffix for NodeJS packages",
         "Consider if any versions need to be bumped manually",
         "Increment the counter in the `release-cycle-info` file",
         "Increment the counter in the `sn_build_info/src/release_info.rs` file",
         f"Create a new `chore(release): release candidate `{version}`",
         "Run the release workflow on the RC branch with 4mb chunk size",
-        "Add the new PR numbers to my internal list",
         "Produce the release description",
-        "Update the Discourse RC thread with the sneak details",
         "Update the Github release description",
+        "Update the changelog thread on Discourse",
+        "Create a new project on Linear",
     ]:
         create_subtask(
             api,
