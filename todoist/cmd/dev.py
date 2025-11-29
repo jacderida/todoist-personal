@@ -740,6 +740,46 @@ def dev_environments_comparison(api):
             task.id)
 
 
+def dev_environments_comparison_results_checklist(api):
+    work_type = WorkType.WORK
+    task_type = TaskType.DEV
+
+    task_title = "Comparison Results Checklist"
+    task = create_task(
+        api,
+        task_title,
+        ENVIRONMENTS_PROJECT_ID,
+        task_type,
+        work_type,
+        extra_labels=["checklist"],
+        apply_date=True)
+
+    for title in [
+        "Record log volume for TEST vs REF",
+        "Generic nodes: summary of connected peers and open connections",
+        "Generic nodes: summary of standard metrics",
+        "Generic nodes: summary of libp2p metrics",
+        "Generic nodes: use testnet comparator to verify ELK connection errors are similar",
+        "Generic nodes: use testnet comparator to verify ELK connection actions are similar",
+        "Generic nodes: verify earnings are non-zero with `Avg. Current ANT Wallet Balance Per Node By Host` metric",
+        "Generic nodes: verify PUT record error rate is low or zero",
+        "Static full cone nodes: summary of connected peers and open connections",
+        "Static full cone nodes: summary of standard metrics",
+        "Static full cone nodes: summary of libp2p metrics",
+        "Static full cone nodes: use testnet comparator to verify ELK connection errors are similar",
+        "Static full cone nodes: use testnet comparator to verify ELK connection actions are similar",
+        "Static full cone nodes: verify earnings are non-zero with `Avg. Current ANT Wallet Balance Per Node By Host` metric",
+        "Static full cone nodes: verify PUT record error rate is low or zero",
+    ]:
+        create_subtask(
+            api,
+            title,
+            ENVIRONMENTS_PROJECT_ID,
+            task_type,
+            work_type,
+            task.id)
+
+
 def dev_environments_client_performance_comparison(api):
     work_type = WorkType.WORK
     task_type = TaskType.DEV

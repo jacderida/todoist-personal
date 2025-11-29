@@ -56,6 +56,9 @@ def get_args():
         "comparison",
         help="Create a task for comparing two environments")
     environments_subparsers.add_parser(
+        "comparison-results-checklist",
+        help="Create a task that provides a checklist for recording the comparison results")
+    environments_subparsers.add_parser(
         "comparison-upload-report",
         help="Generate a report comparing upload metrics between environments")
     environments_subparsers.add_parser(
@@ -221,6 +224,8 @@ def main():
                 dev_environments_client_performance_test(api)
             elif args.environments_command == "comparison":
                 dev_environments_comparison(api)
+            elif args.environments_command == "comparison-results-checklist":
+                dev_environments_comparison_results_checklist(api)
             elif args.environments_command == "comparison-upload-report":
                 dev_environments_comparison_upload_report()
             elif args.environments_command == "maintenance":
