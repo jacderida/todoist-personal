@@ -943,7 +943,7 @@ def dev_environments_client_performance_test(api):
 
     task = create_task(
         api,
-        f"Performance test: `{env_name}` {binary_option_text} [{test_type}]",
+        f"Client performance test: `{env_name}` {binary_option_text} [{test_type}]",
         ENVIRONMENTS_PROJECT_ID,
         task_type,
         work_type,
@@ -951,8 +951,11 @@ def dev_environments_client_performance_test(api):
         description=purpose)
     for task_title in [
         "Define inputs for client deploy workflow",
-        f"Deploy environment",
-        f"Smoke test environment",
+        "Deploy environment",
+        "Smoke test environment",
+        "Perform the test",
+        "Report results",
+        "Destroy the environment",
     ]:
         create_subtask(
             api,
