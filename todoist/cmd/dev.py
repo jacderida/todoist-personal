@@ -2217,6 +2217,13 @@ def is_issue_in_review(issue):
     return "in review" in state_name
 
 
+def has_bug_label(issue):
+    """Check if a Linear issue has the 'Bug' label."""
+    if not hasattr(issue, 'labels') or not issue.labels:
+        return False
+    return any(label.name == "Bug" for label in issue.labels)
+
+
 def dev_linear_sync(api):
     """Sync issues from a Linear project to a Todoist project."""
     # Linear team configuration
@@ -2363,6 +2370,7 @@ def dev_linear_sync(api):
     dev_labels = get_full_label_names(api, ["development"])
     in_review_label = get_full_label_names(api, ["in-review"])[0]
     in_progress_label = get_full_label_names(api, ["in-progress"])[0]
+    bug_label = get_full_label_names(api, ["bug"])[0]
 
     for issue in active_issues:
         issue_identifier = issue.identifier  # e.g., "ABC-123"
@@ -2394,10 +2402,12 @@ def dev_linear_sync(api):
         issue_url = issue.url if hasattr(issue, 'url') else f"https://linear.app/issue/{issue_identifier}"
         task_title = f"[{issue_identifier}]({issue_url}): {issue.title}"
 
-        # Apply in-review label to new tasks if applicable
+        # Apply in-review and bug labels to new tasks if applicable
         labels = dev_labels.copy()
         if is_issue_in_review(issue):
             labels.append(in_review_label)
+        if has_bug_label(issue):
+            labels.append(bug_label)
 
         api.add_task(
             content=task_title,
