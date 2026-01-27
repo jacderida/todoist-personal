@@ -2209,6 +2209,14 @@ def dev_environments_test_upload_report():
     print(f"- Chunk proof errors: {chunk_proof_error_count}")
     print(f"- Not enough quotes errors: {not_enough_quotes_error_count}")
 
+def is_issue_in_review(issue):
+    """Check if a Linear issue has 'in review' status."""
+    if not issue.state:
+        return False
+    state_name = issue.state.name.lower()
+    return "in review" in state_name
+
+
 def dev_linear_sync(api):
     """Sync issues from a Linear project to a Todoist project."""
     # Linear team configuration
@@ -2333,8 +2341,8 @@ def dev_linear_sync(api):
     with console.status("[bold green]Fetching existing Todoist tasks..."):
         existing_tasks = api.get_tasks(project_id=selected_todoist_project.id)
 
-    # Extract issue numbers from existing task titles
-    existing_issue_numbers = set()
+    # Build a map of existing tasks by issue identifier
+    existing_tasks_map = {}
     for task in existing_tasks:
         # Task titles are formatted like "[ABC-123](url): Title"
         # Extract the issue number from the beginning
@@ -2344,38 +2352,67 @@ def dev_linear_sync(api):
             end_bracket = content.find("]")
             if end_bracket > 0:
                 issue_num = content[1:end_bracket]
-                existing_issue_numbers.add(issue_num)
+                existing_tasks_map[issue_num] = task
 
     # Step 7: Create Todoist tasks for new issues
     created_count = 0
+    updated_count = 0
     skipped_count = 0
 
-    # Get the full label name for "development" (includes emoji prefix)
+    # Get the full label names (includes emoji prefixes)
     dev_labels = get_full_label_names(api, ["development"])
+    in_review_label = get_full_label_names(api, ["in-review"])[0]
+    in_progress_label = get_full_label_names(api, ["in-progress"])[0]
 
     for issue in active_issues:
         issue_identifier = issue.identifier  # e.g., "ABC-123"
 
-        if issue_identifier in existing_issue_numbers:
-            skipped_count += 1
+        if issue_identifier in existing_tasks_map:
+            existing_task = existing_tasks_map[issue_identifier]
+            current_labels = existing_task.labels or []
+            in_review = is_issue_in_review(issue)
+            has_in_review = in_review_label in current_labels
+
+            if in_review and not has_in_review:
+                # Add the in-review label and remove in-progress if present
+                new_labels = [l for l in current_labels if l != in_progress_label]
+                new_labels.append(in_review_label)
+                api.update_task(existing_task.id, labels=new_labels)
+                updated_count += 1
+                print(f"  Updated: {issue_identifier}: {issue.title} (added in-review label)")
+            elif not in_review and has_in_review:
+                # Remove the label
+                new_labels = [l for l in current_labels if l != in_review_label]
+                api.update_task(existing_task.id, labels=new_labels)
+                updated_count += 1
+                print(f"  Updated: {issue_identifier}: {issue.title} (removed in-review label)")
+            else:
+                skipped_count += 1
             continue
 
         # Format: [ABC-123](url): Title
         issue_url = issue.url if hasattr(issue, 'url') else f"https://linear.app/issue/{issue_identifier}"
         task_title = f"[{issue_identifier}]({issue_url}): {issue.title}"
 
+        # Apply in-review label to new tasks if applicable
+        labels = dev_labels.copy()
+        if is_issue_in_review(issue):
+            labels.append(in_review_label)
+
         api.add_task(
             content=task_title,
             project_id=selected_todoist_project.id,
-            labels=dev_labels
+            labels=labels
         )
         print(f"  Created: {issue_identifier}: {issue.title}")
         created_count += 1
 
     print(f"\nSync complete!")
     print(f"  Created: {created_count} tasks")
+    if updated_count > 0:
+        print(f"  Updated: {updated_count} tasks")
     if skipped_count > 0:
-        print(f"  Skipped (already exist): {skipped_count} tasks")
+        print(f"  Skipped (no changes): {skipped_count} tasks")
 
 
 #
