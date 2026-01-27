@@ -3,11 +3,16 @@ import questionary
 import shutil
 import toml
 
+from linear_api import LinearClient
 from pathlib import Path
+from rich.console import Console
 
-from todoist.tasks import create_task, create_subtask, WorkType, TaskType
+from todoist.tasks import create_task, create_subtask, get_full_label_names, WorkType, TaskType
+
+console = Console()
 
 
+ACTIVE_WORK_PROJECTS_SECTION_ID = 182988422
 ARCHIVE_WIT_PROJECT_ID = 2324943655
 ARCHIVE_WIT_PATH = "/home/chris/dev/github.com/jacderida/archive-witness-db-tools"
 AUTONOMI_PR_URL = "https://github.com/maidsafe/autonomi/pull/"
@@ -2203,6 +2208,175 @@ def dev_environments_test_upload_report():
     print(f"- Average upload time: {avg_upload_time}s")
     print(f"- Chunk proof errors: {chunk_proof_error_count}")
     print(f"- Not enough quotes errors: {not_enough_quotes_error_count}")
+
+def dev_linear_sync(api):
+    """Sync issues from a Linear project to a Todoist project."""
+    # Linear team configuration
+    LINEAR_TEAMS = {
+        "QA": "TODOIST_LINEAR_QA_API_KEY",
+        "Releases": "TODOIST_LINEAR_RELEASES_API_KEY",
+        "Tech": "TODOIST_LINEAR_TECH_API_KEY",
+    }
+
+    # Step 1: Ask which Linear team to use
+    team_choices = list(LINEAR_TEAMS.keys())
+    selected_team = questionary.select(
+        "Which Linear team do you want to sync from?",
+        choices=team_choices
+    ).ask()
+
+    if not selected_team:
+        print("No team selected. Exiting.")
+        return
+
+    # Get the API key for the selected team
+    api_key_env_var = LINEAR_TEAMS[selected_team]
+    linear_api_key = os.getenv(api_key_env_var)
+    if not linear_api_key:
+        print(f"Error: {api_key_env_var} environment variable is not set.")
+        return
+
+    # Step 2: Connect to Linear and get projects
+    with console.status("[bold green]Connecting to Linear..."):
+        linear_client = LinearClient(api_key=linear_api_key)
+        teams = linear_client.teams.get_all()
+
+    if not teams:
+        print("No teams found in Linear.")
+        return
+
+    # Get the first team (since we're using team-specific API keys)
+    team = list(teams.values())[0]
+
+    with console.status("[bold green]Fetching Linear projects..."):
+        projects = linear_client.projects.get_all(team_id=team.id)
+
+    if not projects:
+        print("No projects found in Linear.")
+        return
+
+    # Step 3: Ask user to select a Linear project
+    project_choices = [f"{p.name}" for p in projects.values()]
+    project_map = {p.name: p for p in projects.values()}
+
+    selected_project_name = questionary.select(
+        "Which Linear project do you want to sync from?",
+        choices=project_choices
+    ).ask()
+
+    if not selected_project_name:
+        print("No project selected. Exiting.")
+        return
+
+    selected_linear_project = project_map[selected_project_name]
+
+    # Step 4: Get Todoist projects under "Active Work Projects" section
+    with console.status("[bold green]Fetching Todoist projects..."):
+        todoist_projects = api.get_projects()
+        # Filter to projects under the "Active Work Projects" section
+        # The section_id for "Active Work Projects" is stored as a constant
+        active_work_projects = [
+            p for p in todoist_projects
+            if hasattr(p, 'parent_id') and p.parent_id == str(ACTIVE_WORK_PROJECTS_SECTION_ID)
+        ]
+
+    # If no projects found under the section, fall back to all projects
+    if not active_work_projects:
+        # Try filtering by name containing "Active Work" as parent
+        active_work_parent = next(
+            (p for p in todoist_projects if "Active Work Projects" in p.name),
+            None
+        )
+        if active_work_parent:
+            active_work_projects = [
+                p for p in todoist_projects
+                if hasattr(p, 'parent_id') and p.parent_id == active_work_parent.id
+            ]
+
+    # If still no projects found, use all projects
+    if not active_work_projects:
+        active_work_projects = todoist_projects
+
+    todoist_project_choices = [p.name for p in active_work_projects]
+    todoist_project_map = {p.name: p for p in active_work_projects}
+
+    selected_todoist_name = questionary.select(
+        "Which Todoist project do you want to sync to?",
+        choices=todoist_project_choices
+    ).ask()
+
+    if not selected_todoist_name:
+        print("No Todoist project selected. Exiting.")
+        return
+
+    selected_todoist_project = todoist_project_map[selected_todoist_name]
+
+    # Step 5: Get Linear issues (filter out completed and cancelled)
+    with console.status("[bold green]Fetching Linear issues..."):
+        all_issues = linear_client.issues.get_by_project(selected_linear_project.id)
+        # Filter out completed and cancelled issues
+        active_issues = []
+        for issue in all_issues.values():
+            state_name = issue.state.name.lower() if issue.state else ""
+            state_type = issue.state.type.lower() if issue.state else ""
+            if state_type not in ["completed", "canceled", "cancelled"]:
+                if state_name not in ["done", "completed", "cancelled", "canceled"]:
+                    active_issues.append(issue)
+
+    if not active_issues:
+        print("No active issues found in the Linear project.")
+        return
+
+    print(f"Found {len(active_issues)} active issues in Linear.")
+
+    # Step 6: Get existing Todoist tasks to detect duplicates
+    with console.status("[bold green]Fetching existing Todoist tasks..."):
+        existing_tasks = api.get_tasks(project_id=selected_todoist_project.id)
+
+    # Extract issue numbers from existing task titles
+    existing_issue_numbers = set()
+    for task in existing_tasks:
+        # Task titles are formatted like "[ABC-123](url): Title"
+        # Extract the issue number from the beginning
+        content = task.content
+        if content.startswith("["):
+            # Extract issue number between [ and ]
+            end_bracket = content.find("]")
+            if end_bracket > 0:
+                issue_num = content[1:end_bracket]
+                existing_issue_numbers.add(issue_num)
+
+    # Step 7: Create Todoist tasks for new issues
+    created_count = 0
+    skipped_count = 0
+
+    # Get the full label name for "development" (includes emoji prefix)
+    dev_labels = get_full_label_names(api, ["development"])
+
+    for issue in active_issues:
+        issue_identifier = issue.identifier  # e.g., "ABC-123"
+
+        if issue_identifier in existing_issue_numbers:
+            skipped_count += 1
+            continue
+
+        # Format: [ABC-123](url): Title
+        issue_url = issue.url if hasattr(issue, 'url') else f"https://linear.app/issue/{issue_identifier}"
+        task_title = f"[{issue_identifier}]({issue_url}): {issue.title}"
+
+        api.add_task(
+            content=task_title,
+            project_id=selected_todoist_project.id,
+            labels=dev_labels
+        )
+        print(f"  Created: {issue_identifier}: {issue.title}")
+        created_count += 1
+
+    print(f"\nSync complete!")
+    print(f"  Created: {created_count} tasks")
+    if skipped_count > 0:
+        print(f"  Skipped (already exist): {skipped_count} tasks")
+
 
 #
 # Helpers
