@@ -2228,6 +2228,7 @@ def dev_linear_sync(api):
     """Sync issues from a Linear project to a Todoist project."""
     # Linear team configuration
     LINEAR_TEAMS = {
+        "Infrastructure": "TODOIST_LINEAR_INFRA_API_KEY",
         "QA": "TODOIST_LINEAR_QA_API_KEY",
         "Releases": "TODOIST_LINEAR_RELEASES_API_KEY",
         "Tech": "TODOIST_LINEAR_TECH_API_KEY",
