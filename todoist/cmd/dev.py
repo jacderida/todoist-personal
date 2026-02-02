@@ -2326,23 +2326,25 @@ def dev_linear_sync(api):
 
     selected_todoist_project = todoist_project_map[selected_todoist_name]
 
-    # Step 5: Get Linear issues (filter out completed and cancelled)
+    # Step 5: Get Linear issues (separate active from completed/cancelled)
     with console.status("[bold green]Fetching Linear issues..."):
         all_issues = linear_client.issues.get_by_project(selected_linear_project.id)
-        # Filter out completed and cancelled issues
         active_issues = []
+        completed_issues = []
         for issue in all_issues.values():
             state_name = issue.state.name.lower() if issue.state else ""
             state_type = issue.state.type.lower() if issue.state else ""
-            if state_type not in ["completed", "canceled", "cancelled"]:
-                if state_name not in ["done", "completed", "cancelled", "canceled"]:
-                    active_issues.append(issue)
+            if state_type in ["completed", "canceled", "cancelled"] or \
+               state_name in ["done", "completed", "cancelled", "canceled"]:
+                completed_issues.append(issue)
+            else:
+                active_issues.append(issue)
 
-    if not active_issues:
-        print("No active issues found in the Linear project.")
+    if not active_issues and not completed_issues:
+        print("No issues found in the Linear project.")
         return
 
-    print(f"Found {len(active_issues)} active issues in Linear.")
+    print(f"Found {len(active_issues)} active issues and {len(completed_issues)} completed/cancelled issues in Linear.")
 
     # Step 6: Get existing Todoist tasks to detect duplicates
     with console.status("[bold green]Fetching existing Todoist tasks..."):
@@ -2417,10 +2419,22 @@ def dev_linear_sync(api):
         print(f"  Created: {issue_identifier}: {issue.title}")
         created_count += 1
 
+    # Step 8: Close Todoist tasks for completed/cancelled Linear issues
+    completed_count = 0
+    for issue in completed_issues:
+        issue_identifier = issue.identifier
+        if issue_identifier in existing_tasks_map:
+            existing_task = existing_tasks_map[issue_identifier]
+            api.close_task(existing_task.id)
+            print(f"  Completed: {issue_identifier}: {issue.title}")
+            completed_count += 1
+
     print(f"\nSync complete!")
     print(f"  Created: {created_count} tasks")
     if updated_count > 0:
         print(f"  Updated: {updated_count} tasks")
+    if completed_count > 0:
+        print(f"  Completed: {completed_count} tasks")
     if skipped_count > 0:
         print(f"  Skipped (no changes): {skipped_count} tasks")
 
