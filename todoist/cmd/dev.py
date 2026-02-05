@@ -2224,7 +2224,7 @@ def has_bug_label(issue):
     return any(label.name == "Bug" for label in issue.labels)
 
 
-def dev_linear_sync(api):
+def dev_linear_sync(api, args=None):
     """Sync issues from a Linear project to a Todoist project."""
     # Linear team configuration
     LINEAR_TEAMS = {
@@ -2234,16 +2234,26 @@ def dev_linear_sync(api):
         "Tech": "TODOIST_LINEAR_TECH_API_KEY",
     }
 
-    # Step 1: Ask which Linear team to use
-    team_choices = list(LINEAR_TEAMS.keys())
-    selected_team = questionary.select(
-        "Which Linear team do you want to sync from?",
-        choices=team_choices
-    ).ask()
+    non_interactive = (
+        args and args.linear_team and args.linear_project and args.todoist_project
+    )
 
-    if not selected_team:
-        print("No team selected. Exiting.")
-        return
+    # Step 1: Select Linear team
+    if non_interactive:
+        selected_team = args.linear_team
+        if selected_team not in LINEAR_TEAMS:
+            print(f"Error: Unknown Linear team '{selected_team}'. Valid teams: {', '.join(LINEAR_TEAMS.keys())}")
+            return
+    else:
+        team_choices = list(LINEAR_TEAMS.keys())
+        selected_team = questionary.select(
+            "Which Linear team do you want to sync from?",
+            choices=team_choices
+        ).ask()
+
+        if not selected_team:
+            print("No team selected. Exiting.")
+            return
 
     # Get the API key for the selected team
     api_key_env_var = LINEAR_TEAMS[selected_team]
@@ -2271,24 +2281,40 @@ def dev_linear_sync(api):
         print("No projects found in Linear.")
         return
 
-    # Step 3: Ask user to select a Linear project
-    project_choices = [f"{p.name}" for p in projects.values()]
+    # Step 3: Select a Linear project
     project_map = {p.name: p for p in projects.values()}
 
-    selected_project_name = questionary.select(
-        "Which Linear project do you want to sync from?",
-        choices=project_choices
-    ).ask()
+    if non_interactive:
+        selected_project_name = args.linear_project
+        if selected_project_name not in project_map:
+            print(f"Error: Linear project '{selected_project_name}' not found. Available projects: {', '.join(project_map.keys())}")
+            return
+    else:
+        project_choices = [f"{p.name}" for p in projects.values()]
 
-    if not selected_project_name:
-        print("No project selected. Exiting.")
-        return
+        selected_project_name = questionary.select(
+            "Which Linear project do you want to sync from?",
+            choices=project_choices
+        ).ask()
+
+        if not selected_project_name:
+            print("No project selected. Exiting.")
+            return
 
     selected_linear_project = project_map[selected_project_name]
 
-    # Step 4: Get Todoist projects under "Active Work Projects" section
+    # Step 4: Select Todoist project
     with console.status("[bold green]Fetching Todoist projects..."):
         todoist_projects = [p for page in api.get_projects() for p in page]
+
+    if non_interactive:
+        todoist_project_map = {p.name: p for p in todoist_projects}
+        selected_todoist_name = args.todoist_project
+        if selected_todoist_name not in todoist_project_map:
+            print(f"Error: Todoist project '{selected_todoist_name}' not found.")
+            return
+        selected_todoist_project = todoist_project_map[selected_todoist_name]
+    else:
         # Filter to projects under the "Active Work Projects" section
         # The section_id for "Active Work Projects" is stored as a constant
         active_work_projects = [
@@ -2296,36 +2322,36 @@ def dev_linear_sync(api):
             if hasattr(p, 'parent_id') and p.parent_id == str(ACTIVE_WORK_PROJECTS_SECTION_ID)
         ]
 
-    # If no projects found under the section, fall back to all projects
-    if not active_work_projects:
-        # Try filtering by name containing "Active Work" as parent
-        active_work_parent = next(
-            (p for p in todoist_projects if "Active Work Projects" in p.name),
-            None
-        )
-        if active_work_parent:
-            active_work_projects = [
-                p for p in todoist_projects
-                if hasattr(p, 'parent_id') and p.parent_id == active_work_parent.id
-            ]
+        # If no projects found under the section, fall back to all projects
+        if not active_work_projects:
+            # Try filtering by name containing "Active Work" as parent
+            active_work_parent = next(
+                (p for p in todoist_projects if "Active Work Projects" in p.name),
+                None
+            )
+            if active_work_parent:
+                active_work_projects = [
+                    p for p in todoist_projects
+                    if hasattr(p, 'parent_id') and p.parent_id == active_work_parent.id
+                ]
 
-    # If still no projects found, use all projects
-    if not active_work_projects:
-        active_work_projects = todoist_projects
+        # If still no projects found, use all projects
+        if not active_work_projects:
+            active_work_projects = todoist_projects
 
-    todoist_project_choices = [p.name for p in active_work_projects]
-    todoist_project_map = {p.name: p for p in active_work_projects}
+        todoist_project_choices = [p.name for p in active_work_projects]
+        todoist_project_map = {p.name: p for p in active_work_projects}
 
-    selected_todoist_name = questionary.select(
-        "Which Todoist project do you want to sync to?",
-        choices=todoist_project_choices
-    ).ask()
+        selected_todoist_name = questionary.select(
+            "Which Todoist project do you want to sync to?",
+            choices=todoist_project_choices
+        ).ask()
 
-    if not selected_todoist_name:
-        print("No Todoist project selected. Exiting.")
-        return
+        if not selected_todoist_name:
+            print("No Todoist project selected. Exiting.")
+            return
 
-    selected_todoist_project = todoist_project_map[selected_todoist_name]
+        selected_todoist_project = todoist_project_map[selected_todoist_name]
 
     # Step 5: Get Linear issues (separate active from completed/cancelled)
     with console.status("[bold green]Fetching Linear issues..."):
