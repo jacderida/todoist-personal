@@ -2288,7 +2288,7 @@ def dev_linear_sync(api):
 
     # Step 4: Get Todoist projects under "Active Work Projects" section
     with console.status("[bold green]Fetching Todoist projects..."):
-        todoist_projects = api.get_projects()
+        todoist_projects = [p for page in api.get_projects() for p in page]
         # Filter to projects under the "Active Work Projects" section
         # The section_id for "Active Work Projects" is stored as a constant
         active_work_projects = [
@@ -2349,7 +2349,7 @@ def dev_linear_sync(api):
 
     # Step 6: Get existing Todoist tasks to detect duplicates
     with console.status("[bold green]Fetching existing Todoist tasks..."):
-        existing_tasks = api.get_tasks(project_id=selected_todoist_project.id)
+        existing_tasks = [t for page in api.get_tasks(project_id=selected_todoist_project.id) for t in page]
 
     # Build a map of existing tasks by issue identifier
     existing_tasks_map = {}
@@ -2426,7 +2426,7 @@ def dev_linear_sync(api):
         issue_identifier = issue.identifier
         if issue_identifier in existing_tasks_map:
             existing_task = existing_tasks_map[issue_identifier]
-            api.close_task(existing_task.id)
+            api.complete_task(existing_task.id)
             print(f"  Completed: {issue_identifier}: {issue.title}")
             completed_count += 1
 

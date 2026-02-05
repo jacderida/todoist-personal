@@ -246,7 +246,7 @@ class FoodItem:
 def get_calories(api):
     print("Select the date:")
     date = date_picker()
-    all_food_tasks = api.get_tasks(filter=FOOD_FILTER)
+    all_food_tasks = [t for page in api.filter_tasks(query=FOOD_FILTER) for t in page]
     food_by_date = [
         x for x in all_food_tasks if datetime.strptime(x.due.date, "%Y-%m-%d").date() == date
     ]
@@ -261,7 +261,8 @@ def get_calories(api):
         "Salt": 0.0,
     }
     for task in food_by_date:
-        lines = api.get_comments(task_id=task.id)[0].content.splitlines()
+        comments = [c for page in api.get_comments(task_id=task.id) for c in page]
+        lines = comments[0].content.splitlines()
         for line in lines:
             split = line.split(':')
             name = split[0]

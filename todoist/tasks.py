@@ -72,7 +72,7 @@ def create_task(
 
 
 def get_full_label_names(api, label_names):
-    retrieved_labels = api.get_labels()
+    retrieved_labels = [l for page in api.get_labels() for l in page]
     full_label_names = []
     for label in label_names:
         try:
