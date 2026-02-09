@@ -30,3 +30,9 @@ todoist dev linear-sync \
     --linear-team Tech \
     --linear-project "Antnode Automatic Upgrades" \
     --todoist-project "Automatic Upgrades"
+
+echo "Syncing General Infrastructure Maintenance project..."
+todoist dev linear-sync \
+    --linear-team Infrastructure \
+    --linear-project "General Infrastructure Maintenance" \
+    --todoist-project "Maintenance"

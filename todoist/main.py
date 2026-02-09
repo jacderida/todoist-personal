@@ -2,6 +2,7 @@ import argparse
 import os
 import sys
 
+from .cmd.checklists import *
 from .cmd.dev import *
 from .cmd.food import *
 from .cmd.films import *
@@ -14,6 +15,22 @@ from todoist_api_python.api import TodoistAPI
 def get_args():
     parser = argparse.ArgumentParser(description="Create tasks in Todoist")
     main_subparser = parser.add_subparsers(dest="command", required=True)
+
+    checklists_parser = main_subparser.add_parser(
+        "checklists", help="Create checklist tasks")
+    checklists_subparsers = checklists_parser.add_subparsers(
+        dest="checklists_command",
+        help="Create checklist tasks",
+        required=True)
+    work_parser = checklists_subparsers.add_parser(
+        "work", help="Create work-related checklist tasks")
+    work_subparsers = work_parser.add_subparsers(
+        dest="work_command",
+        help="Create work-related checklist tasks",
+        required=True)
+    work_subparsers.add_parser(
+        "daily-planning",
+        help="Create a daily planning checklist task in the Routine project")
 
     dev_parser = main_subparser.add_parser("dev", help="Create tasks for development")
     dev_subparsers = dev_parser.add_subparsers(
@@ -220,7 +237,11 @@ def main():
     api = TodoistAPI(api_token)
     args = get_args()
 
-    if args.command == "dev":
+    if args.command == "checklists":
+        if args.checklists_command == "work":
+            if args.work_command == "daily-planning":
+                checklists_work_daily_planning(api)
+    elif args.command == "dev":
         if args.dev_command == "deployments":
             if args.deployments_command == "generate-markdown-post":
                 dev_deployments_generate_markdown_post()
