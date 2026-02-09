@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=75.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "todoist-personal"
+version = "0.3.3"
+requires-python = ">=3.12"
+dependencies = [
+    "linear-api",
+    "questionary",
+    "rich",
+    "todoist-api-python",
+    "toml",
+]
+
+[project.scripts]
+todoist = "todoist.main:main"

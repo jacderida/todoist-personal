@@ -10,13 +10,12 @@ This is a Python CLI tool for automating Todoist task creation for personal work
 
 ### Environment Setup
 
-This project uses virtualfish for Fish shell:
+This project uses uv for dependency management:
 
 ```bash
-vf new todoist-personal
-vf activate todoist-personal
-pip install -r requirements.txt
-pip install -e .
+uv venv
+source .venv/bin/activate.fish
+uv pip install -e .
 ```
 
 ### Required Environment Variables

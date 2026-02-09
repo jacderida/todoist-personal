@@ -1,6 +1,0 @@
-linear-api
-questionary
-rich
-setuptools
-todoist-api-python
-toml
