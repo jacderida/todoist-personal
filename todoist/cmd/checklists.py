@@ -3,6 +3,7 @@ from rich.console import Console
 from ..tasks import get_full_label_names
 
 ROUTINE_PROJECT_ID = "6VF269FwQHvQ344P"
+CI_RELEASE_PROJECT_ID = "6fpM8J7qG7qjxf9f"
 
 
 def checklists_work_daily_planning(api):
@@ -66,3 +67,37 @@ def checklists_work_daily_planning(api):
                     parent_id=subtask.id,
                 )
                 print(f"Created subtask '{child.content}'")
+
+
+def checklists_work_process_staging_results(api):
+    console = Console()
+    labels = get_full_label_names(api, ["checklist"])
+
+    with console.status("[bold green]Creating process staging results tasks on Todoist..."):
+        parent = api.add_task(
+            content="Process staging results",
+            project_id=CI_RELEASE_PROJECT_ID,
+            labels=labels,
+            due_string="today",
+        )
+        print(f"Created task '{parent.content}'")
+
+        subtasks = [
+            "Stop production downloader on `STG-03`",
+            "Stop uploaders and downloaders on `STG-01` and `STG-02`",
+            "Use the testnet comparator dashboard to view `STG-01` vs `STG-02`",
+            "Generate comparison report for `STG-01` vs `STG-02`",
+            "Generate upload/download summary report for `STG-01` vs `STG-02`",
+            "Fetch upload logs from `STG-04`",
+            "Generate production upload report for `STG-04`",
+            "Obtain sign off from Qi on comparison report",
+            "Obtain sign off from Nic for release",
+        ]
+
+        for subtask_content in subtasks:
+            subtask = api.add_task(
+                content=subtask_content,
+                project_id=CI_RELEASE_PROJECT_ID,
+                parent_id=parent.id,
+            )
+            print(f"Created subtask '{subtask.content}'")

@@ -31,6 +31,9 @@ def get_args():
     work_subparsers.add_parser(
         "daily-planning",
         help="Create a daily planning checklist task in the Routine project")
+    work_subparsers.add_parser(
+        "process-staging-results",
+        help="Create a process staging results checklist task in the CI/Release project")
 
     dev_parser = main_subparser.add_parser("dev", help="Create tasks for development")
     dev_subparsers = dev_parser.add_subparsers(
@@ -241,6 +244,8 @@ def main():
         if args.checklists_command == "work":
             if args.work_command == "daily-planning":
                 checklists_work_daily_planning(api)
+            elif args.work_command == "process-staging-results":
+                checklists_work_process_staging_results(api)
     elif args.command == "dev":
         if args.dev_command == "deployments":
             if args.deployments_command == "generate-markdown-post":
