@@ -122,6 +122,19 @@ def get_args():
         "rc-sneak",
         help="Create tasks for a new sneak release candidate")
 
+    sync_linear_from_todoist_parser = dev_subparsers.add_parser(
+        "sync-linear-from-todoist",
+        help="Sync Todoist tasks to Linear issues (set In Progress for today's tasks)")
+    sync_linear_from_todoist_parser.add_argument(
+        "--linear-team", type=str, default=None,
+        help="Linear team name (e.g., Infrastructure, Tech). Bypasses interactive selection.")
+    sync_linear_from_todoist_parser.add_argument(
+        "--linear-project", type=str, default=None,
+        help="Linear project name. Bypasses interactive selection.")
+    sync_linear_from_todoist_parser.add_argument(
+        "--todoist-project", type=str, default=None,
+        help="Todoist project name. Bypasses interactive selection.")
+
     sync_todoist_from_linear_parser = dev_subparsers.add_parser(
         "sync-todoist-from-linear",
         help="Sync tasks from a Linear project to a Todoist project")
@@ -290,6 +303,8 @@ def main():
                 dev_releases_rc_new(api)
             elif args.releases_command == "rc-sneak":
                 dev_releases_rc_sneak(api)
+        elif args.dev_command == "sync-linear-from-todoist":
+            dev_sync_linear_from_todoist(api, args)
         elif args.dev_command == "sync-todoist-from-linear":
             dev_sync_todoist_from_linear(api, args)
         elif args.dev_command == "tests":

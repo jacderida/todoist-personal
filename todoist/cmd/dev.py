@@ -3,7 +3,9 @@ import questionary
 import shutil
 import toml
 
+from datetime import date
 from linear_api import LinearClient
+from linear_api.domain import LinearIssueUpdateInput
 from pathlib import Path
 from rich.console import Console
 
@@ -2464,6 +2466,225 @@ def dev_sync_todoist_from_linear(api, args=None):
         print(f"  Completed: {completed_count} tasks")
     if skipped_count > 0:
         print(f"  Skipped (no changes): {skipped_count} tasks")
+
+
+def dev_sync_linear_from_todoist(api, args=None):
+    """Sync Todoist tasks to Linear issues: set In Progress for today's tasks."""
+    LINEAR_TEAMS = {
+        "Infrastructure": "TODOIST_LINEAR_INFRA_API_KEY",
+        "QA": "TODOIST_LINEAR_QA_API_KEY",
+        "Releases": "TODOIST_LINEAR_RELEASES_API_KEY",
+        "Tech": "TODOIST_LINEAR_TECH_API_KEY",
+    }
+
+    non_interactive = (
+        args and args.linear_team and args.linear_project and args.todoist_project
+    )
+
+    # Step 1: Select Linear team
+    if non_interactive:
+        selected_team = args.linear_team
+        if selected_team not in LINEAR_TEAMS:
+            print(f"Error: Unknown Linear team '{selected_team}'. Valid teams: {', '.join(LINEAR_TEAMS.keys())}")
+            return
+    else:
+        team_choices = list(LINEAR_TEAMS.keys())
+        selected_team = questionary.select(
+            "Which Linear team do you want to sync to?",
+            choices=team_choices
+        ).ask()
+
+        if not selected_team:
+            print("No team selected. Exiting.")
+            return
+
+    api_key_env_var = LINEAR_TEAMS[selected_team]
+    linear_api_key = os.getenv(api_key_env_var)
+    if not linear_api_key:
+        print(f"Error: {api_key_env_var} environment variable is not set.")
+        return
+
+    # Step 2: Connect to Linear and get projects
+    with console.status("[bold green]Connecting to Linear..."):
+        linear_client = LinearClient(api_key=linear_api_key)
+        teams = linear_client.teams.get_all()
+
+    if not teams:
+        print("No teams found in Linear.")
+        return
+
+    team = list(teams.values())[0]
+
+    with console.status("[bold green]Fetching Linear projects..."):
+        projects = linear_client.projects.get_all(team_id=team.id)
+
+    if not projects:
+        print("No projects found in Linear.")
+        return
+
+    # Step 3: Select a Linear project
+    project_map = {p.name: p for p in projects.values()}
+
+    if non_interactive:
+        selected_project_name = args.linear_project
+        if selected_project_name not in project_map:
+            print(f"Error: Linear project '{selected_project_name}' not found. Available projects: {', '.join(project_map.keys())}")
+            return
+    else:
+        project_choices = [f"{p.name}" for p in projects.values()]
+
+        selected_project_name = questionary.select(
+            "Which Linear project do you want to sync to?",
+            choices=project_choices
+        ).ask()
+
+        if not selected_project_name:
+            print("No project selected. Exiting.")
+            return
+
+    selected_linear_project = project_map[selected_project_name]
+
+    # Step 4: Select Todoist project
+    with console.status("[bold green]Fetching Todoist projects..."):
+        todoist_projects = [p for page in api.get_projects() for p in page]
+
+    if non_interactive:
+        todoist_project_map = {p.name: p for p in todoist_projects}
+        selected_todoist_name = args.todoist_project
+        if selected_todoist_name not in todoist_project_map:
+            print(f"Error: Todoist project '{selected_todoist_name}' not found.")
+            return
+        selected_todoist_project = todoist_project_map[selected_todoist_name]
+    else:
+        active_work_projects = [
+            p for p in todoist_projects
+            if hasattr(p, 'parent_id') and p.parent_id == str(ACTIVE_WORK_PROJECTS_SECTION_ID)
+        ]
+
+        if not active_work_projects:
+            active_work_parent = next(
+                (p for p in todoist_projects if "Active Work Projects" in p.name),
+                None
+            )
+            if active_work_parent:
+                active_work_projects = [
+                    p for p in todoist_projects
+                    if hasattr(p, 'parent_id') and p.parent_id == active_work_parent.id
+                ]
+
+        if not active_work_projects:
+            active_work_projects = todoist_projects
+
+        todoist_project_choices = [p.name for p in active_work_projects]
+        todoist_project_map = {p.name: p for p in active_work_projects}
+
+        selected_todoist_name = questionary.select(
+            "Which Todoist project do you want to sync from?",
+            choices=todoist_project_choices
+        ).ask()
+
+        if not selected_todoist_name:
+            print("No Todoist project selected. Exiting.")
+            return
+
+        selected_todoist_project = todoist_project_map[selected_todoist_name]
+
+    # Step 5: Fetch Linear issues and build identifier -> issue map
+    with console.status("[bold green]Fetching Linear issues..."):
+        all_issues = linear_client.issues.get_by_project(selected_linear_project.id)
+        linear_issues_map = {}
+        for issue in all_issues.values():
+            linear_issues_map[issue.identifier] = issue
+
+    print(f"Found {len(linear_issues_map)} issues in Linear project '{selected_project_name}'.")
+
+    # Step 6: Fetch Todoist tasks
+    with console.status("[bold green]Fetching Todoist tasks..."):
+        todoist_tasks = [t for page in api.get_tasks(project_id=selected_todoist_project.id) for t in page]
+
+    print(f"Found {len(todoist_tasks)} tasks in Todoist project '{selected_todoist_name}'.")
+
+    # Step 7: Process each Todoist task
+    today = date.today()
+    updated_count = 0
+    skipped_already_in_progress = 0
+    skipped_in_review = 0
+    skipped_no_today = 0
+    skipped_no_identifier = 0
+    warning_orphans = 0
+    warning_duplicates = 0
+    seen_identifiers = set()
+
+    for task in todoist_tasks:
+        content = task.content
+        if not content.startswith("["):
+            skipped_no_identifier += 1
+            continue
+
+        end_bracket = content.find("]")
+        if end_bracket <= 0:
+            skipped_no_identifier += 1
+            continue
+
+        issue_identifier = content[1:end_bracket]
+
+        if issue_identifier in seen_identifiers:
+            warning_duplicates += 1
+            print(f"  Warning: Duplicate Todoist task for {issue_identifier}")
+        seen_identifiers.add(issue_identifier)
+
+        # Check for "Today" due date
+        if not task.due or task.due.date != today:
+            skipped_no_today += 1
+            continue
+
+        # Look up the Linear issue
+        if issue_identifier not in linear_issues_map:
+            warning_orphans += 1
+            print(f"  Warning: {issue_identifier} not found in Linear project '{selected_project_name}'")
+            continue
+
+        issue = linear_issues_map[issue_identifier]
+
+        # Check if In Review — do not change
+        if is_issue_in_review(issue):
+            skipped_in_review += 1
+            print(f"  Skipped: {issue_identifier}: {issue.title} (In Review)")
+            continue
+
+        # Check if already In Progress
+        state_name = issue.state.name.lower() if issue.state else ""
+        if "in progress" in state_name:
+            skipped_already_in_progress += 1
+            print(f"  Already in progress: {issue_identifier}: {issue.title}")
+            continue
+
+        # Update to In Progress
+        try:
+            update_data = LinearIssueUpdateInput(stateName="In Progress")
+            linear_client.issues.update(issue.id, update_data)
+            print(f"  Updated: {issue_identifier}: {issue.title} -> In Progress")
+            updated_count += 1
+        except ValueError as e:
+            raise RuntimeError(
+                f"Failed to set 'In Progress' state for {issue_identifier}: {e}. "
+                f"The 'In Progress' state may not be available for team '{selected_team}'."
+            ) from e
+
+    print(f"\nSync complete!")
+    print(f"  Updated to In Progress: {updated_count}")
+    if skipped_already_in_progress > 0:
+        print(f"  Skipped (already In Progress): {skipped_already_in_progress}")
+    if skipped_in_review > 0:
+        print(f"  Skipped (In Review): {skipped_in_review}")
+    if skipped_no_today > 0:
+        print(f"  Skipped (no Today due date): {skipped_no_today}")
+    if skipped_no_identifier > 0:
+        print(f"  Skipped (no Linear identifier): {skipped_no_identifier}")
+    if warning_duplicates > 0:
+        print(f"  Warnings (duplicates): {warning_duplicates}")
+    if warning_orphans > 0:
+        print(f"  Warnings (orphaned references): {warning_orphans}")
 
 
 #
