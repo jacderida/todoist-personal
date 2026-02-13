@@ -122,16 +122,16 @@ def get_args():
         "rc-sneak",
         help="Create tasks for a new sneak release candidate")
 
-    linear_sync_parser = dev_subparsers.add_parser(
-        "linear-sync",
+    sync_todoist_from_linear_parser = dev_subparsers.add_parser(
+        "sync-todoist-from-linear",
         help="Sync tasks from a Linear project to a Todoist project")
-    linear_sync_parser.add_argument(
+    sync_todoist_from_linear_parser.add_argument(
         "--linear-team", type=str, default=None,
         help="Linear team name (e.g., Infrastructure, Tech). Bypasses interactive selection.")
-    linear_sync_parser.add_argument(
+    sync_todoist_from_linear_parser.add_argument(
         "--linear-project", type=str, default=None,
         help="Linear project name. Bypasses interactive selection.")
-    linear_sync_parser.add_argument(
+    sync_todoist_from_linear_parser.add_argument(
         "--todoist-project", type=str, default=None,
         help="Todoist project name. Bypasses interactive selection.")
 
@@ -290,8 +290,8 @@ def main():
                 dev_releases_rc_new(api)
             elif args.releases_command == "rc-sneak":
                 dev_releases_rc_sneak(api)
-        elif args.dev_command == "linear-sync":
-            dev_linear_sync(api, args)
+        elif args.dev_command == "sync-todoist-from-linear":
+            dev_sync_todoist_from_linear(api, args)
         elif args.dev_command == "tests":
             if args.tests_command == "nodeman-linux-smoke-test":
                 dev_tests_nodeman_linux_smoke_test(api)

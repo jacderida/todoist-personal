@@ -2224,7 +2224,7 @@ def has_bug_label(issue):
     return any(label.name == "Bug" for label in issue.labels)
 
 
-def dev_linear_sync(api, args=None):
+def dev_sync_todoist_from_linear(api, args=None):
     """Sync issues from a Linear project to a Todoist project."""
     # Linear team configuration
     LINEAR_TEAMS = {

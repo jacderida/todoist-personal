@@ -4,7 +4,7 @@ set -euo pipefail
 echo "==============================================="
 echo "Syncing Release Process Enhancements project..."
 echo "==============================================="
-todoist dev linear-sync \
+todoist dev sync-todoist-from-linear \
     --linear-team Infrastructure \
     --linear-project "Release Process Enhancements" \
     --todoist-project "CI/Release"
@@ -12,7 +12,7 @@ todoist dev linear-sync \
 echo "==================================="
 echo "Syncing Testnet Registry project..."
 echo "==================================="
-todoist dev linear-sync \
+todoist dev sync-todoist-from-linear \
     --linear-team Tech \
     --linear-project "Testnet Registry" \
     --todoist-project "Testnet Registry"
@@ -20,7 +20,7 @@ todoist dev linear-sync \
 echo "==========================================="
 echo "Syncing Platform Reach Expansion project..."
 echo "==========================================="
-todoist dev linear-sync \
+todoist dev sync-todoist-from-linear \
     --linear-team Tech \
     --linear-project "Platform Reach Expansion" \
     --todoist-project "Platform Reach Expansion"
@@ -28,7 +28,7 @@ todoist dev linear-sync \
 echo "========================================="
 echo "Syncing Launchpad Improvements project..."
 echo "========================================="
-todoist dev linear-sync \
+todoist dev sync-todoist-from-linear \
     --linear-team Tech \
     --linear-project "Launchpad Improvements" \
     --todoist-project "Node Launchpad"
@@ -36,7 +36,7 @@ todoist dev linear-sync \
 echo "============================================="
 echo "Syncing Antnode Automatic Upgrades project..."
 echo "============================================="
-todoist dev linear-sync \
+todoist dev sync-todoist-from-linear \
     --linear-team Tech \
     --linear-project "Antnode Automatic Upgrades" \
     --todoist-project "Automatic Upgrades"
@@ -44,7 +44,7 @@ todoist dev linear-sync \
 echo "====================================================="
 echo "Syncing General Infrastructure Maintenance project..."
 echo "====================================================="
-todoist dev linear-sync \
+todoist dev sync-todoist-from-linear \
     --linear-team Infrastructure \
     --linear-project "General Infrastructure Maintenance" \
     --todoist-project "Maintenance"
