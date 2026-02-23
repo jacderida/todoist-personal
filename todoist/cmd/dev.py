@@ -2234,6 +2234,7 @@ def dev_sync_todoist_from_linear(api, args=None):
         "QA": "TODOIST_LINEAR_QA_API_KEY",
         "Releases": "TODOIST_LINEAR_RELEASES_API_KEY",
         "Tech": "TODOIST_LINEAR_TECH_API_KEY",
+        "V2.0": "ANT_RUNNER_LINEAR_V2_API_KEY",
     }
 
     non_interactive = (
@@ -2475,6 +2476,7 @@ def dev_sync_linear_from_todoist(api, args=None):
         "QA": "TODOIST_LINEAR_QA_API_KEY",
         "Releases": "TODOIST_LINEAR_RELEASES_API_KEY",
         "Tech": "TODOIST_LINEAR_TECH_API_KEY",
+        "V2.0": "ANT_RUNNER_LINEAR_V2_API_KEY",
     }
 
     non_interactive = (

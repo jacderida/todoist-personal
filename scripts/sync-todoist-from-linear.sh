@@ -56,3 +56,11 @@ todoist dev sync-todoist-from-linear \
     --linear-team Tech \
     --linear-project "Troubleshooting Production Network Issues" \
     --todoist-project "Troubleshooting Production Network Issues"
+
+echo "========================================="
+echo "Syncing Saorsa Testnet Registry project"
+echo "========================================="
+todoist dev sync-todoist-from-linear \
+    --linear-team "V2.0" \
+    --linear-project "Saorsa Testnet Registry" \
+    --todoist-project "Saorsa Testnet Registry"

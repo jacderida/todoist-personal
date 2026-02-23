@@ -53,6 +53,14 @@ echo "========================================================="
 echo "Syncing Troubleshooting Production Network Issues project"
 echo "========================================================="
 todoist dev sync-linear-from-todoist \
-    --linear-team Infrastructure \
+    --linear-team Tech \
     --linear-project "Troubleshooting Production Network Issues" \
     --todoist-project "Troubleshooting Production Network Issues"
+
+echo "========================================="
+echo "Syncing Saorsa Testnet Registry project"
+echo "========================================="
+todoist dev sync-linear-from-todoist \
+    --linear-team "V2.0" \
+    --linear-project "Saorsa Testnet Registry" \
+    --todoist-project "Saorsa Testnet Registry"
