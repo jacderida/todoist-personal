@@ -33,14 +33,6 @@ todoist dev sync-linear-from-todoist \
     --linear-project "Launchpad Improvements" \
     --todoist-project "Node Launchpad"
 
-echo "=========================================="
-echo "Syncing Antnode Automatic Upgrades project"
-echo "=========================================="
-todoist dev sync-linear-from-todoist \
-    --linear-team Tech \
-    --linear-project "Antnode Automatic Upgrades" \
-    --todoist-project "Automatic Upgrades"
-
 echo "=================================================="
 echo "Syncing General Infrastructure Maintenance project"
 echo "=================================================="
@@ -64,3 +56,19 @@ todoist dev sync-linear-from-todoist \
     --linear-team "V2.0" \
     --linear-project "Saorsa Testnet Registry" \
     --todoist-project "Saorsa Testnet Registry"
+
+echo "=========================================="
+echo "Syncing Automatic Upgrades for Saorsa Node"
+echo "=========================================="
+todoist dev sync-linear-from-todoist \
+    --linear-team "V2.0" \
+    --linear-project "Automatic Upgrades for Saorsa Node" \
+    --todoist-project "Automatic Upgrades"
+
+echo "==================="
+echo "Syncing Unified CLI"
+echo "==================="
+todoist dev sync-linear-from-todoist \
+    --linear-team "V2.0" \
+    --linear-project "Unified CLI" \
+    --todoist-project "Unified CLI"
