@@ -21,7 +21,7 @@ echo "========================================"
 echo "Syncing Platform Reach Expansion project"
 echo "========================================"
 todoist dev sync-linear-from-todoist \
-    --linear-team Tech \
+    --linear-team "V2.0" \
     --linear-project "Platform Reach Expansion" \
     --todoist-project "Platform Reach Expansion"
 
