@@ -96,3 +96,11 @@ uv run todoist dev sync-linear-from-todoist \
     --linear-team "V2.0" \
     --linear-project "Repository Migrations" \
     --todoist-project "Repository Migrations"
+
+echo "======================="
+echo "Syncing Autonomi Desktop"
+echo "======================="
+uv run todoist dev sync-linear-from-todoist \
+    --linear-team "V2.0" \
+    --linear-project "Autonomi Desktop" \
+    --todoist-project "Autonomi Desktop"

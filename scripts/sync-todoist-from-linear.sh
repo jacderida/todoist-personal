@@ -104,3 +104,11 @@ uv run todoist dev sync-todoist-from-linear \
     --linear-team "V2.0" \
     --linear-project "Saorsa" \
     --todoist-project "Saorsa"
+
+echo "========================"
+echo "Syncing Autonomi Desktop"
+echo "========================"
+uv run todoist dev sync-todoist-from-linear \
+    --linear-team "V2.0" \
+    --linear-project "Autonomi Desktop" \
+    --todoist-project "Autonomi Desktop"
