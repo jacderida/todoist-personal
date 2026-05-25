@@ -9,6 +9,7 @@ from linear_api.domain import LinearIssueUpdateInput
 from pathlib import Path
 from rich.console import Console
 
+from todoist import cache
 from todoist.tasks import create_task, create_subtask, get_full_label_names, WorkType, TaskType
 
 console = Console()
@@ -2240,6 +2241,7 @@ def dev_sync_todoist_from_linear(api, args=None):
     non_interactive = (
         args and args.linear_team and args.linear_project and args.todoist_project
     )
+    no_cache = getattr(args, "no_cache", False)
 
     # Step 1: Select Linear team
     if non_interactive:
@@ -2268,7 +2270,11 @@ def dev_sync_todoist_from_linear(api, args=None):
     # Step 2: Connect to Linear and get projects
     with console.status("[bold green]Connecting to Linear..."):
         linear_client = LinearClient(api_key=linear_api_key)
-        teams = linear_client.teams.get_all()
+        teams = cache.cached_fetch(
+            f"linear_teams_{selected_team}",
+            lambda: linear_client.teams.get_all(),
+            no_cache=no_cache,
+        )
 
     if not teams:
         print("No teams found in Linear.")
@@ -2278,7 +2284,11 @@ def dev_sync_todoist_from_linear(api, args=None):
     team = list(teams.values())[0]
 
     with console.status("[bold green]Fetching Linear projects..."):
-        projects = linear_client.projects.get_all(team_id=team.id)
+        projects = cache.cached_fetch(
+            f"linear_projects_{selected_team}",
+            lambda: linear_client.projects.get_all(team_id=team.id),
+            no_cache=no_cache,
+        )
 
     if not projects:
         print("No projects found in Linear.")
@@ -2308,7 +2318,11 @@ def dev_sync_todoist_from_linear(api, args=None):
 
     # Step 4: Select Todoist project
     with console.status("[bold green]Fetching Todoist projects..."):
-        todoist_projects = [p for page in api.get_projects() for p in page]
+        todoist_projects = cache.cached_fetch(
+            "todoist_projects",
+            lambda: [p for page in api.get_projects() for p in page],
+            no_cache=no_cache,
+        )
 
     if non_interactive:
         todoist_project_map = {p.name: p for p in todoist_projects}
@@ -2482,6 +2496,7 @@ def dev_sync_linear_from_todoist(api, args=None):
     non_interactive = (
         args and args.linear_team and args.linear_project and args.todoist_project
     )
+    no_cache = getattr(args, "no_cache", False)
 
     # Step 1: Select Linear team
     if non_interactive:
@@ -2509,7 +2524,11 @@ def dev_sync_linear_from_todoist(api, args=None):
     # Step 2: Connect to Linear and get projects
     with console.status("[bold green]Connecting to Linear..."):
         linear_client = LinearClient(api_key=linear_api_key)
-        teams = linear_client.teams.get_all()
+        teams = cache.cached_fetch(
+            f"linear_teams_{selected_team}",
+            lambda: linear_client.teams.get_all(),
+            no_cache=no_cache,
+        )
 
     if not teams:
         print("No teams found in Linear.")
@@ -2518,7 +2537,11 @@ def dev_sync_linear_from_todoist(api, args=None):
     team = list(teams.values())[0]
 
     with console.status("[bold green]Fetching Linear projects..."):
-        projects = linear_client.projects.get_all(team_id=team.id)
+        projects = cache.cached_fetch(
+            f"linear_projects_{selected_team}",
+            lambda: linear_client.projects.get_all(team_id=team.id),
+            no_cache=no_cache,
+        )
 
     if not projects:
         print("No projects found in Linear.")
@@ -2548,7 +2571,11 @@ def dev_sync_linear_from_todoist(api, args=None):
 
     # Step 4: Select Todoist project
     with console.status("[bold green]Fetching Todoist projects..."):
-        todoist_projects = [p for page in api.get_projects() for p in page]
+        todoist_projects = cache.cached_fetch(
+            "todoist_projects",
+            lambda: [p for page in api.get_projects() for p in page],
+            no_cache=no_cache,
+        )
 
     if non_interactive:
         todoist_project_map = {p.name: p for p in todoist_projects}

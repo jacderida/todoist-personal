@@ -134,6 +134,9 @@ def get_args():
     sync_linear_from_todoist_parser.add_argument(
         "--todoist-project", type=str, default=None,
         help="Todoist project name. Bypasses interactive selection.")
+    sync_linear_from_todoist_parser.add_argument(
+        "--no-cache", action="store_true",
+        help="Force a fresh fetch of project lists, bypassing (and refreshing) the cache.")
 
     sync_todoist_from_linear_parser = dev_subparsers.add_parser(
         "sync-todoist-from-linear",
@@ -147,6 +150,9 @@ def get_args():
     sync_todoist_from_linear_parser.add_argument(
         "--todoist-project", type=str, default=None,
         help="Todoist project name. Bypasses interactive selection.")
+    sync_todoist_from_linear_parser.add_argument(
+        "--no-cache", action="store_true",
+        help="Force a fresh fetch of project lists, bypassing (and refreshing) the cache.")
 
     tests_parser = dev_subparsers.add_parser("tests", help="Create tasks for testing")
     tests_subparsers = tests_parser.add_subparsers(
