@@ -23,12 +23,11 @@ def checklists_work_daily_planning(api):
             (
                 "Infrastructure check up",
                 [
-                    "Review droplet list for leftover droplets",
-                    "Check Digital Ocean estimated billing value",
-                    "Review `Default V6` dashboard for `PROD-01`",
-                    "Review `Default V6` dashboard for `PROD-02`",
-                    "Review `Mainnet Continuous Downloader` dashboard for `PROD-03`",
-                    "Review `Mainnet Continuous Downloader` dashboard for `PROD-04`",
+                    "Review for leftover instances",
+                    "Review infrastructure costs in #monitoring-infra-costings",
+                    "Review production Grafana dashboard",
+                    "Review Hermes report on `ant-prod-01` instances",
+                    "Review Hermes report on production downloads",
                 ],
             ),
             (
@@ -37,7 +36,6 @@ def checklists_work_daily_planning(api):
                     "Slack",
                     "Discord",
                     "Email",
-                    "Forum",
                 ],
             ),
             (
