@@ -112,3 +112,11 @@ uv run todoist dev sync-todoist-from-linear \
     --linear-team "V2.0" \
     --linear-project "Autonomi Desktop" \
     --todoist-project "Autonomi Desktop"
+
+echo "========================"
+echo "Syncing Infrastructure"
+echo "========================"
+uv run todoist dev sync-todoist-from-linear \
+    --linear-team "V2.0" \
+    --linear-project "Infrastructure" \
+    --todoist-project "Infrastructure"
