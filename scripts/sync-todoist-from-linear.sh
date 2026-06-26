@@ -120,3 +120,11 @@ uv run todoist dev sync-todoist-from-linear \
     --linear-team "V2.0" \
     --linear-project "Infrastructure" \
     --todoist-project "Infrastructure"
+
+echo "========================"
+echo "Syncing User Support"
+echo "========================"
+uv run todoist dev sync-todoist-from-linear \
+    --linear-team "V2.0" \
+    --linear-project "User Support" \
+    --todoist-project "Support"
