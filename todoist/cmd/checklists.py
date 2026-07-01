@@ -21,13 +21,14 @@ def checklists_work_daily_planning(api):
 
         subtasks = [
             (
-                "Infrastructure check up",
+                "Infrastructure/Monitoring check up",
                 [
                     "Review for leftover instances",
                     "Review infrastructure costs in #monitoring-infra-costings",
                     "Review production Grafana dashboard",
                     "Review Hermes report on `ant-prod-01` instances",
                     "Review Hermes report on production downloads",
+                    "Review #prod-canary report",
                 ],
             ),
             (
