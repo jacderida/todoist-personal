@@ -154,6 +154,13 @@ def get_args():
         "--no-cache", action="store_true",
         help="Force a fresh fetch of project lists, bypassing (and refreshing) the cache.")
 
+    order_parser = dev_subparsers.add_parser(
+        "order",
+        help="Reorder a project's tasks by their Linear issue number")
+    order_parser.add_argument(
+        "project_name", type=str,
+        help="Name of the Todoist project whose tasks to reorder")
+
     tests_parser = dev_subparsers.add_parser("tests", help="Create tasks for testing")
     tests_subparsers = tests_parser.add_subparsers(
         dest="tests_command", help="Create tasks for testing", required=True)
@@ -313,6 +320,8 @@ def main():
             dev_sync_linear_from_todoist(api, args)
         elif args.dev_command == "sync-todoist-from-linear":
             dev_sync_todoist_from_linear(api, args)
+        elif args.dev_command == "order":
+            dev_order(api, args)
         elif args.dev_command == "tests":
             if args.tests_command == "nodeman-linux-smoke-test":
                 dev_tests_nodeman_linux_smoke_test(api)

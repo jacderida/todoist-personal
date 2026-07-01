@@ -1,7 +1,11 @@
+import json
 import os
 import questionary
+import re
+import requests
 import shutil
 import toml
+import uuid
 
 from datetime import date
 from linear_api import LinearClient
@@ -2225,6 +2229,117 @@ def has_bug_label(issue):
     if not hasattr(issue, 'labels') or not issue.labels:
         return False
     return any(label.name == "Bug" for label in issue.labels)
+
+
+def _parse_linear_identifier(content):
+    """Extract a Linear issue identifier from a Todoist task's content.
+
+    Synced tasks are titled like "[V2-241](url): Title", but this also tolerates a
+    bare "V2-241 ..." prefix. Returns a (team, number) tuple for sorting, or None if
+    the content has no Linear issue prefix.
+    """
+    match = re.match(r"^\[?([A-Za-z][A-Za-z0-9]*)-(\d+)", content)
+    if not match:
+        return None
+    return (match.group(1).upper(), int(match.group(2)))
+
+
+def dev_order(api, args):
+    """Reorder a project's top-level tasks by their Linear issue number.
+
+    Linear-synced tasks carry an issue-number prefix (e.g. "V2-241"). Over time,
+    syncing randomises the task order in the Todoist UI. This command sorts the
+    prefixed tasks ascending by (team, issue number) and pushes any non-prefixed
+    tasks to the bottom (preserving their current relative order).
+    """
+    project_name = args.project_name
+
+    with console.status("[bold green]Fetching Todoist projects..."):
+        todoist_projects = cache.cached_fetch(
+            "todoist_projects",
+            lambda: [p for page in api.get_projects() for p in page],
+        )
+
+    project_map = {p.name: p for p in todoist_projects}
+    if project_name not in project_map:
+        print(f"Error: Todoist project '{project_name}' not found.")
+        return
+    project = project_map[project_name]
+
+    with console.status(f"[bold green]Fetching tasks for '{project_name}'..."):
+        tasks = [t for page in api.get_tasks(project_id=project.id) for t in page]
+
+    # Top-level tasks only; leave subtasks untouched.
+    top_level_tasks = [t for t in tasks if getattr(t, "parent_id", None) is None]
+
+    prefixed = []
+    non_prefixed = []
+    for task in top_level_tasks:
+        identifier = _parse_linear_identifier(task.content)
+        if identifier is None:
+            non_prefixed.append(task)
+        else:
+            prefixed.append((identifier, task))
+
+    if not prefixed:
+        print(
+            f"Error: no tasks in project '{project_name}' have a Linear issue "
+            f"prefix (e.g. 'V2-241'). Nothing to order."
+        )
+        return
+
+    # Sort prefixed tasks ascending by (team, number); keep non-prefixed in their
+    # existing relative order at the bottom.
+    prefixed.sort(key=lambda item: item[0])
+    ordered_tasks = [task for _, task in prefixed] + non_prefixed
+
+    _reorder_tasks(ordered_tasks)
+
+    print(f"Reordered {len(ordered_tasks)} tasks in '{project_name}':")
+    for position, task in enumerate(ordered_tasks, start=1):
+        print(f"  {position:>3}. {task.content}")
+    if non_prefixed:
+        print(
+            f"({len(non_prefixed)} task(s) without a Linear prefix were moved to "
+            f"the bottom.)"
+        )
+
+
+def _reorder_tasks(ordered_tasks):
+    """Set the in-project order of tasks via the Todoist Sync API.
+
+    The todoist-api-python REST client has no reorder capability, so this issues an
+    ``item_reorder`` command directly against the Sync API. Tasks are assigned a
+    sequential 1-based child_order matching their position in ``ordered_tasks``.
+    """
+    token = os.getenv("TODOIST_API_TOKEN")
+    if not token:
+        raise RuntimeError("TODOIST_API_TOKEN environment variable is not set")
+
+    command = {
+        "type": "item_reorder",
+        "uuid": str(uuid.uuid4()),
+        "args": {
+            "items": [
+                {"id": task.id, "child_order": position}
+                for position, task in enumerate(ordered_tasks, start=1)
+            ]
+        },
+    }
+
+    with console.status("[bold green]Applying new task order..."):
+        response = requests.post(
+            "https://api.todoist.com/api/v1/sync",
+            headers={"Authorization": f"Bearer {token}"},
+            data={"commands": json.dumps([command])},
+        )
+        response.raise_for_status()
+        result = response.json()
+
+    sync_status = result.get("sync_status", {})
+    status = sync_status.get(command["uuid"])
+    if status != "ok" and isinstance(status, dict):
+        raise RuntimeError(f"Todoist reorder failed: {status}")
 
 
 def dev_sync_todoist_from_linear(api, args=None):
