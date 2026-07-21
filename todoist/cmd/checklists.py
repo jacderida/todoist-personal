@@ -27,6 +27,7 @@ def checklists_work_daily_planning(api):
                     "Review infrastructure costs in #monitoring-infra-costings",
                     "Review production Grafana dashboard",
                     "Review Hermes report on `ant-prod-01` instances",
+                    "Review Hermes report on `ant-prod-debug-01` instances",
                     "Review Hermes report on production downloads",
                     "Review #prod-canary report",
                 ],
