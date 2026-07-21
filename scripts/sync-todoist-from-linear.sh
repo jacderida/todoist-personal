@@ -128,3 +128,11 @@ uv run todoist dev sync-todoist-from-linear \
     --linear-team "V2.0" \
     --linear-project "User Support" \
     --todoist-project "Support"
+
+echo "==================================="
+echo "Syncing Release Process Maintenance"
+echo "==================================="
+uv run todoist dev sync-todoist-from-linear \
+    --linear-team "Releases" \
+    --linear-project "Release Process Maintenance" \
+    --todoist-project "CI/Release"
