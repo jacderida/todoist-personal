@@ -48,9 +48,9 @@ def checklists_work_daily_planning(api):
                     "Add item to Todoist if not captured in Linear",
                 ],
             ),
+            ("Clear any tasks from yesterday by updating Linear before sync", []),
             ("Use the `dev sync-todoist-from-linear` command to update Todoist", []),
             ("Select work from each project", []),
-            ("Use the `dev sync-linear-from-todoist` command to update Linear", []),
             ("Review waiting/delegated/blocked tasks", []),
             ("Organise and prioritise the work on the Kanban board", []),
         ]
