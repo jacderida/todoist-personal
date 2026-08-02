@@ -20,21 +20,24 @@ def checklists_work_daily_planning(api):
         print(f"Created task '{parent.content}'")
 
         subtasks = [
+            ("Clear any tasks from yesterday by updating Linear before sync", []),
             (
-                "Infrastructure/Monitoring check up",
+                "Infrastructure/monitoring check up",
                 [
+                    "Production disk survey",
                     "Review for leftover instances",
                     "Review infrastructure costs in #monitoring-infra-costings",
                     "Review production Grafana dashboard",
+                    "Review Hermes report on production downloads",
                     "Review Hermes report on `ant-prod-01` instances",
                     "Review Hermes report on `ant-prod-debug-01` instances",
-                    "Review Hermes report on production downloads",
                     "Review #prod-canary report",
                 ],
             ),
             (
                 "Capture work by reviewing the following",
                 [
+                    "Linear notifications",
                     "Slack",
                     "Discord",
                     "Email",
@@ -48,7 +51,6 @@ def checklists_work_daily_planning(api):
                     "Add item to Todoist if not captured in Linear",
                 ],
             ),
-            ("Clear any tasks from yesterday by updating Linear before sync", []),
             ("Use the `dev sync-todoist-from-linear` command to update Todoist", []),
             ("Select work from each project", []),
             ("Review waiting/delegated/blocked tasks", []),

@@ -1,14 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "============================================"
-echo "Syncing Release Process Enhancements project"
-echo "============================================"
-uv run todoist dev sync-todoist-from-linear \
-    --linear-team Infrastructure \
-    --linear-project "Release Process Enhancements" \
-    --todoist-project "CI/Release"
-
 echo "================================"
 echo "Syncing Testnet Registry project"
 echo "================================"
@@ -130,9 +122,17 @@ uv run todoist dev sync-todoist-from-linear \
     --todoist-project "Support"
 
 echo "==================================="
-echo "Syncing Release Process Maintenance"
+echo "Syncing Release Process Extensions"
 echo "==================================="
 uv run todoist dev sync-todoist-from-linear \
-    --linear-team "Releases" \
-    --linear-project "Release Process Maintenance" \
+    --linear-team "V2.0" \
+    --linear-project "Release Process Extensions" \
+    --todoist-project "CI/Release"
+
+echo "==================================="
+echo "Syncing Releases"
+echo "==================================="
+uv run todoist dev sync-todoist-from-linear \
+    --linear-team "V2.0" \
+    --linear-project "Releases" \
     --todoist-project "CI/Release"
